@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
+    <!-- نفس محتوى Head السابق -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام إدارة أموال العمل</title>
-    <!-- إضافة Firebase SDK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-firestore-compat.js"></script>
-    <style>
-    
+
+     <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
+
+
+        /* نفس الـ CSS السابق */
         * {
             box-sizing: border-box;
             font-family: 'Cairo', sans-serif;
@@ -285,17 +290,6 @@
     </div>
 
     <script>
-        // تهيئة Firebase
-
-       <!-- تحديث مكتبات Firebase -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
-
-
          // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCLQT6rj4Y2BIQIBVHo5umje8dhcb58Ik8",
@@ -308,7 +302,6 @@
             measurementId: "G-5W8XHCPEKH"
         };
 
-        // تهيئة Firebase
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
@@ -321,22 +314,20 @@
         window.transactions = [];
         window.totalInputAmount = 0;
         window.totalOutputAmount = 0;
-      
+
         // دالة التحقق من كلمة المرور وإنشاء مستخدم مجهول
+         // تحديث دالة تسجيل الدخول
         async function checkPassword(event) {
             event.preventDefault();
             const password = document.getElementById('passwordInput').value;
             if (password === '2022') {
                 try {
-                    await firebase.auth().signInAnonymously();
-                    document.getElementById('loginOverlay').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
-                    document.getElementById('logoutBtn').style.display = 'block';
+                    await window.signInAnonymously();
                     document.getElementById('passwordInput').value = '';
                     document.getElementById('errorMessage').style.display = 'none';
-                    loadTransactions();
                 } catch (error) {
                     console.error("Error signing in:", error);
+                    alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
                     document.getElementById('errorMessage').style.display = 'block';
                 }
             } else {
@@ -345,7 +336,9 @@
             }
             return false;
         }
+         
 
+        // دالة تحميل العمليات من Firebase
        // دالة تحميل العمليات
         window.loadTransactions = async function() {
             try {
@@ -377,8 +370,7 @@
                 alert('حدث خطأ أثناء تحميل البيانات: ' + error.message);
             }
         };
-      
-
+         
         // دالة تحديث الإحصائيات
         function updateStatistics() {
             document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ريال';
@@ -411,141 +403,7 @@
         }
 
         // معالجة نموذج الإدخال
-        document.getElementById('inputForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('inputAmount').value);
-            const notes = document.getElementById('inputNotes').value;
-
-            const transaction = {
-                datetime: new Date().toLocaleString('ar-SA'),
-                type: 'إدخال للعمل',
-                amount: amount,
-                notes: notes,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            try {
-                await db.collection('transactions').add(transaction);
-                loadTransactions();
-                this.reset();
-            } catch (error) {
-                console.error("Error adding transaction:", error);
-            }
-        });
-
-        // معالجة نموذج الإخراج
-        document.getElementById('outputForm').addEventListener('submit', async function(e) {e.preventDefault();
-            const amount = parseFloat(document.getElementById('outputAmount').value);
-            const notes = document.getElementById('outputNotes').value;
-
-            const transaction = {
-                datetime: new Date().toLocaleString('ar-SA'),
-                type: 'عائد من العمل',
-                amount: amount,
-                notes: notes,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            try {
-                await db.collection('transactions').add(transaction);
-                loadTransactions();
-                this.reset();
-            } catch (error) {
-                console.error("Error adding transaction:", error);
-            }
-        });
-
-        // معالجة تسجيل الخروج
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
-            try {
-                await firebase.auth().signOut();
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'none';
-                // إعادة تعيين المتغيرات
-                transactions = [];
-                totalInputAmount = 0;
-                totalOutputAmount = 0;
-                document.getElementById('transactionsBody').innerHTML = '';
-                updateStatistics();
-            } catch (error) {
-                console.error("Error signing out:", error);
-            }
-        });
-
-        // إعداد مراقب حالة المصادقة
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('logoutBtn').style.display = 'block';
-                loadTransactions();
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'none';
-            }
-        });
-
-        // تصدير الدوال للنطاق العالمي
-        window.signInAnonymously = () => signInAnonymously(auth);
-        window.signOut = () => signOut(auth);
-        window.addDoc = addDoc;
-        window.collection = collection;
-        window.serverTimestamp = serverTimestamp;
-  
-  
-
-        // التحقق من وجود اتصال بالإنترنت
-        window.addEventListener('online', function() {
-            loadTransactions();
-        });
-
-        window.addEventListener('offline', function() {
-            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
-        });
-
-        // تحميل البيانات عند بدء التطبيق
-        window.onload = function() {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-        };
-
-        // دالة لتنسيق التاريخ والوقت
-        function formatDateTime(date) {
-            return new Date(date).toLocaleString('ar-SA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-
-
-         // تحديث دالة تسجيل الدخول
-        async function checkPassword(event) {
-            event.preventDefault();
-            const password = document.getElementById('passwordInput').value;
-            if (password === '2022') {
-                try {
-                    await window.signInAnonymously();
-                    document.getElementById('passwordInput').value = '';
-                    document.getElementById('errorMessage').style.display = 'none';
-                } catch (error) {
-                    console.error("Error signing in:", error);
-                    alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
-                    document.getElementById('errorMessage').style.display = 'block';
-                }
-            } else {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-            }
-            return false;
-        }
-
-        // تحديث معالج نموذج الإدخال
+         // تحديث معالج نموذج الإدخال
         document.getElementById('inputForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('inputAmount').value);
@@ -573,8 +431,10 @@
                 alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
             }
         });
+         
 
-        // تحديث معالج نموذج الإخراج
+        // معالجة نموذج الإخراج
+          // تحديث معالج نموذج الإخراج
         document.getElementById('outputForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('outputAmount').value);
@@ -602,8 +462,8 @@
                 alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
             }
         });
-
-        // تحديث معالج تسجيل الخروج
+         
+        // معالجة تسجيل الخروج
         document.getElementById('logoutBtn').addEventListener('click', async function() {
             try {
                 await window.signOut();
@@ -617,8 +477,53 @@
                 alert('حدث خطأ أثناء تسجيل الخروج: ' + error.message);
             }
         });
+         
 
-        // الدوال المساعدة
+        // مراقبة حالة المصادقة
+        // إعداد مراقب حالة المصادقة
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                loadTransactions();
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+        });
+         
+
+       // معالجة حالة الاتصال بالإنترنت
+        window.addEventListener('online', function() {
+            window.loadTransactions();
+        });
+
+        window.addEventListener('offline', function() {
+            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
+        });
+
+
+        // تحميل البيانات عند بدء التطبيق
+        window.onload = function() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        };
+
+        // دالة لتنسيق التاريخ والوقت
+        function formatDateTime(date) {
+            return new Date(date).toLocaleString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+           // الدوال المساعدة
         function updateStatistics() {
             document.getElementById('totalInput').textContent = window.totalInputAmount.toFixed(2) + ' ريال';
             document.getElementById('totalOutput').textContent = window.totalOutputAmount.toFixed(2) + ' ريال';
@@ -648,20 +553,28 @@
             tbody.insertBefore(row, tbody.firstChild);
         }
 
+       
+         
+        // دالة للتحقق من صحة المدخلات
         function validateInput(amount) {
             return amount > 0 && !isNaN(amount);
         }
 
-        // معالجة حالة الاتصال بالإنترنت
-        window.addEventListener('online', function() {
-            window.loadTransactions();
+        // إضافة مستمع للأخطاء غير المعالجة
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('خطأ غير معالج:', event.reason);
+            alert('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.');
         });
 
-        window.addEventListener('offline', function() {
-            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
-        });
+          // تصدير الدوال للنطاق العالمي
+        window.signInAnonymously = () => signInAnonymously(auth);
+        window.signOut = () => signOut(auth);
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.serverTimestamp = serverTimestamp;
 
-        // تهيئة التطبيق
+         
+     // تهيئة التطبيق
         window.onload = function() {
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
