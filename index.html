@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام إدارة أموال العمل</title>
     <!-- نضيف مكتبات Firebase -->
+
+    <!-- إضافة مكتبات Firebase قبل نهاية head -->
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+</head>
     
     <!-- نفس الـ CSS السابق -->
    <title>نظام إدارة أموال العمل</title>
@@ -294,187 +296,162 @@
         </div>
     </div>
 
-    <script>
-        // تهيئة Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLQT6rj4Y2BIQIBVHo5umje8dhcb58Ik8",
-            authDomain: "doyon-4ca32.firebaseapp.com",
-            databaseURL: "https://doyon-4ca32-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "doyon-4ca32",
-            storageBucket: "doyon-4ca32.firebasestorage.app",
-            messagingSenderId: "632088822052",
-            appId: "1:632088822052:web:a45b5bfec48f0a60ebf3b1",
-            measurementId: "G-5W8XHCPEKH"
-        };
+  <script>
+    // تهيئة Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLQT6rj4Y2BIQIBVHo5umje8dhcb58Ik8",
+        authDomain: "doyon-4ca32.firebaseapp.com",
+        databaseURL: "https://doyon-4ca32-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "doyon-4ca32",
+        storageBucket: "doyon-4ca32.firebasestorage.app",
+        messagingSenderId: "632088822052",
+        appId: "1:632088822052:web:a45b5bfec48f0a60ebf3b1",
+        measurementId: "G-5W8XHCPEKH"
+    };
 
-        // تهيئة التطبيق
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        firebase.analytics();
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-        let transactions = [];
-        let totalInputAmount = 0;
-        let totalOutputAmount = 0;
+    let transactions = [];
+    let totalInputAmount = 0;
+    let totalOutputAmount = 0;
+    let isLoggedIn = false;
 
-        // دالة لتحميل البيانات من Firebase
-        function loadDataFromFirebase() {
-            database.ref('transactions').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    transactions = Object.values(data);
+    // دالة تحميل البيانات من Firebase
+    function loadDataFromFirebase() {
+        database.ref('transactions').once('value')
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    transactions = Object.values(snapshot.val() || {});
                     updateTotals();
                     refreshTransactionsTable();
                 }
             });
+    }
 
-            database.ref('totals').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    totalInputAmount = data.totalInput || 0;
-                    totalOutputAmount = data.totalOutput || 0;
-                    updateStatistics();
-                }
-            });
+    // دالة حفظ البيانات في Firebase
+    function saveToFirebase(transaction) {
+        const newTransactionRef = database.ref('transactions').push();
+        return newTransactionRef.set(transaction);
+    }
+
+    // دالة التحقق من كلمة المرور
+    function checkPassword(event) {
+        event.preventDefault();
+        const password = document.getElementById('passwordInput').value;
+        if (password === '2022') {
+            isLoggedIn = true;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            loadDataFromFirebase(); // تحميل البيانات عند تسجيل الدخول
+        } else {
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
         }
+        return false;
+    }
 
-        // دالة لحفظ البيانات في Firebase
-        function saveDataToFirebase() {
-            database.ref('transactions').set(transactions);
-            database.ref('totals').set({
-                totalInput: totalInputAmount,
-                totalOutput: totalOutputAmount
-            });
-        }
-
-        // دالة التحقق من كلمة المرور
-        function checkPassword(event) {
-            event.preventDefault();
-            const password = document.getElementById('passwordInput').value;
-            if (password === '2022') {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('logoutBtn').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('errorMessage').style.display = 'none';
-                loadDataFromFirebase(); // تحميل البيانات عند تسجيل الدخول
+    // دالة تحديث الإجماليات
+    function updateTotals() {
+        totalInputAmount = 0;
+        totalOutputAmount = 0;
+        transactions.forEach(transaction => {
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount += parseFloat(transaction.amount);
             } else {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
+                totalOutputAmount += parseFloat(transaction.amount);
             }
-            return false;
-        }
+        });
+        updateStatistics();
+    }
 
-        // دالة تحديث الإجماليات
-        function updateTotals() {
-            totalInputAmount = 0;
-            totalOutputAmount = 0;
-            transactions.forEach(transaction => {
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount += transaction.amount;
-                } else {
-                    totalOutputAmount += transaction.amount;
-                }
-            });
-            updateStatistics();
-        }
+    // دالة تحديث جدول العمليات
+    function refreshTransactionsTable() {
+        const tbody = document.getElementById('transactionsBody');
+        tbody.innerHTML = '';
+        transactions.forEach(transaction => {
+            addTransactionRow(transaction);
+        });
+    }
 
-        // دالة تحديث الإحصائيات
-        function updateStatistics() {
-            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ';
-            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ';
-            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
-            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
-        }
+    // معالجة نموذج الإدخال
+    document.getElementById('inputForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!isLoggedIn) return;
 
-        // دالة تحديث جدول العمليات
-        function refreshTransactionsTable() {
-            const tbody = document.getElementById('transactionsBody');
-            tbody.innerHTML = '';
-            transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime)).forEach(transaction => {
-                addTransactionRow(transaction);
-            });
-        }
+        const amount = parseFloat(document.getElementById('inputAmount').value);
+        const notes = document.getElementById('inputNotes').value;
+        
+        const transaction = {
+            datetime: new Date().toLocaleString('ar-SA'),
+            type: 'إدخال للعمل',
+            amount: amount,
+            notes: notes
+        };
 
-        // دالة إضافة صف جديد للجدول
-        function addTransactionRow(transaction) {
-            const tbody = document.getElementById('transactionsBody');
-            const row = document.createElement('tr');
-            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            row.innerHTML = `
-                <td>${transaction.datetime}</td>
-                <td>${transaction.type}</td>
-                <td>${transaction.amount.toFixed(2)} ريال</td>
-                <td>${transaction.notes}</td>
-                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
-            `;
-            tbody.insertBefore(row, tbody.firstChild);
-        }
-
-        // معالجة نموذج الإدخال
-        document.getElementById('inputForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('inputAmount').value);
-            const notes = document.getElementById('inputNotes').value;
-            
-            const transaction = {
-                datetime: new Date().toLocaleString('ar-SA'),
-                type: 'إدخال للعمل',
-                amount: amount,
-                notes: notes
-            };
-            
+        saveToFirebase(transaction).then(() => {
             transactions.push(transaction);
             totalInputAmount += amount;
-            
             addTransactionRow(transaction);
             updateStatistics();
-            saveDataToFirebase(); // حفظ البيانات بعد كل عملية
-            
             this.reset();
+        }).catch(error => {
+            console.error("Error saving transaction:", error);
+            alert("حدث خطأ في حفظ البيانات");
         });
+    });
 
-        // معالجة نموذج الإخراج
-        document.getElementById('outputForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('outputAmount').value);
-            const notes = document.getElementById('outputNotes').value;
-            
-            const transaction = {
-                datetime: new Date().toLocaleString('ar-SA'),
-                type: 'عائد من العمل',
-                amount: amount,
-                notes: notes
-            };
-            
+    // معالجة نموذج الإخراج
+    document.getElementById('outputForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!isLoggedIn) return;
+
+        const amount = parseFloat(document.getElementById('outputAmount').value);
+        const notes = document.getElementById('outputNotes').value;
+        
+        const transaction = {
+            datetime: new Date().toLocaleString('ar-SA'),
+            type: 'عائد من العمل',
+            amount: amount,
+            notes: notes
+        };
+
+        saveToFirebase(transaction).then(() => {
             transactions.push(transaction);
             totalOutputAmount += amount;
-            
             addTransactionRow(transaction);
             updateStatistics();
-            saveDataToFirebase(); // حفظ البيانات بعد كل عملية
-            
             this.reset();
+        }).catch(error => {
+            console.error("Error saving transaction:", error);
+            alert("حدث خطأ في حفظ البيانات");
         });
+    });
 
-        // معالجة تسجيل الخروج
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'none';
-            // إعادة تعيين المتغيرات المحلية
-            transactions = [];
-            totalInputAmount = 0;
-            totalOutputAmount = 0;
-            document.getElementById('transactionsBody').innerHTML = '';
-            updateStatistics();
-        });
+    // معالجة تسجيل الخروج
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        isLoggedIn = false;
+        transactions = [];
+        totalInputAmount = 0;
+        totalOutputAmount = 0;
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'none';
+        document.getElementById('transactionsBody').innerHTML = '';
+        updateStatistics();
+    });
 
-        // التحقق عند تحميل الصفحة
-        window.onload = function() {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-        };
-    </script>
+    // التحقق عند تحميل الصفحة
+    window.onload = function() {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'none';
+    };
+</script>
+
 </body>
 </html>
