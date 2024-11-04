@@ -260,11 +260,11 @@
         <div class="statistics">
             <div class="stat-card">
                 <h3>إجمالي المدخلات</h3>
-                <p id="totalInput">0 ريال</p>
+                <p id="totalInput">0 </p>
             </div>
             <div class="stat-card">
                 <h3>إجمالي العائدات</h3>
-                <p id="totalOutput">0 ريال</p>
+                <p id="totalOutput">0 </p>
             </div>
             <div class="stat-card">
                 <h3>هامش الربح</h3>
@@ -373,8 +373,8 @@
          
         // دالة تحديث الإحصائيات
         function updateStatistics() {
-            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ريال';
-            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ريال';
+            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ';
+            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ';
             
             const profitMargin = totalInputAmount > 0 ? 
                 ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
@@ -523,10 +523,7 @@
             });
         }
 
-           // الدوال المساعدة
-        function updateStatistics() {
-            document.getElementById('totalInput').textContent = window.totalInputAmount.toFixed(2) + ' ريال';
-            document.getElementById('totalOutput').textContent = window.totalOutputAmount.toFixed(2) + ' ريال';
+       
             
             const profitMargin = window.totalInputAmount > 0 ? 
                 ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
@@ -535,9 +532,7 @@
             document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
         }
 
-        function addTransactionRow(transaction) {
-            const tbody = document.getElementById('transactionsBody');
-            const row = document.createElement('tr');
+      
             
             const profitMargin = window.totalInputAmount > 0 ? 
                 ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
