@@ -1,214 +1,214 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-    <!-- نفس محتوى Head السابق -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام إدارة أموال العمل</title>
+    <!-- نضيف مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-analytics-compat.js"></script>
+    
+    <!-- نفس الـ CSS السابق -->
+   <title>نظام إدارة أموال العمل</title>
+    <style>
+    * {
+        box-sizing: border-box;
+        font-family: 'Cairo', sans-serif;
+    }
 
-     <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
+    body {
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
 
+    /* أنماط نافذة تسجيل الدخول */
+    .login-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
 
-        /* نفس الـ CSS السابق */
-        * {
-            box-sizing: border-box;
-            font-family: 'Cairo', sans-serif;
-        }
+    .login-box {
+        background-color: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+    }
 
-        body {
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-        }
+    .login-box h2 {
+        margin-bottom: 20px;
+        color: #2c3e50;
+    }
 
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+    .login-box input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 2px solid #bdc3c7;
+        border-radius: 6px;
+        font-size: 16px;
+        text-align: center;
+    }
 
-        .login-box {
-            background-color: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
+    .login-box button {
+        background-color: #2196f3;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+    }
 
-        .login-box h2 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
+    .error-message {
+        color: #f44336;
+        margin-top: 10px;
+        display: none;
+    }
 
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 16px;
-            text-align: center;
-        }
+    /* أنماط المحتوى الرئيسي */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: none;
+    }
 
-        .login-box button {
-            background-color: #2196f3;
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
+    .forms-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
 
-        .error-message {
-            color: #f44336;
-            margin-top: 10px;
-            display: none;
-        }
+    .form-section {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #f8f9fa;
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: none;
-        }
+    .input-section {
+        background-color: #e3f2fd;
+    }
 
-        .forms-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+    .output-section {
+        background-color: #e8f5e9;
+    }
 
-        .form-section {
-            padding: 20px;
-            border-radius: 10px;
-            background-color: #f8f9fa;
-        }
+    .form-group {
+        margin-bottom: 15px;
+    }
 
-        .input-section {
-            background-color: #e3f2fd;
-        }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
 
-        .output-section {
-            background-color: #e8f5e9;
-        }
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #bdc3c7;
+        border-radius: 6px;
+        font-size: 16px;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
+    .btn-input {
+        background-color: #2196f3;
+        color: white;
+    }
 
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 16px;
-        }
+    .btn-output {
+        background-color: #4caf50;
+        color: white;
+    }
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
+    .statistics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+    }
 
-        .btn-input {
-            background-color: #2196f3;
-            color: white;
-        }
+    .stat-card {
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
 
-        .btn-output {
-            background-color: #4caf50;
-            color: white;
-        }
+    .transactions-table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
 
-        .statistics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 20px;
-        }
+    .transactions-table th,
+    .transactions-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: right;
+    }
 
-        .stat-card {
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+    .transactions-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
 
-        .transactions-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
+    .profit {
+        color: #4caf50;
+        font-weight: bold;
+    }
 
-        .transactions-table th,
-        .transactions-table td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: right;
-        }
+    .loss {
+        color: #f44336;
+        font-weight: bold;
+    }
 
-        .transactions-table th {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-
-        .profit {
-            color: #4caf50;
-            font-weight: bold;
-        }
-
-        .loss {
-            color: #f44336;
-            font-weight: bold;
-        }
-
-        .logout-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: #f44336;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 100;
-        }
-    </style>
+    .logout-btn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: #f44336;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+    }
+</style>
 </head>
 <body>
+    <!-- نافذة تسجيل الدخول -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
             <h2>تسجيل الدخول</h2>
@@ -220,12 +220,14 @@
         </div>
     </div>
 
+    <!-- زر تسجيل الخروج -->
     <button id="logoutBtn" class="logout-btn" style="display: none;">تسجيل الخروج</button>
 
+    <!-- المحتوى الرئيسي -->
     <div id="mainContent" class="container">
         <h1>نظام إدارة أموال العمل</h1>
-
         <div class="forms-container">
+            <!-- قسم إدخال أموال العمل -->
             <div class="form-section input-section">
                 <h2>إدخال أموال للعمل</h2>
                 <form id="inputForm">
@@ -241,6 +243,7 @@
                 </form>
             </div>
 
+            <!-- قسم إدخال الأموال القادمة من العمل -->
             <div class="form-section output-section">
                 <h2>إدخال أموال قادمة من العمل</h2>
                 <form id="outputForm">
@@ -257,6 +260,7 @@
             </div>
         </div>
 
+        <!-- قسم الإحصائيات -->
         <div class="statistics">
             <div class="stat-card">
                 <h3>إجمالي المدخلات</h3>
@@ -272,6 +276,7 @@
             </div>
         </div>
 
+        <!-- جدول العمليات -->
         <div class="summary">
             <h2>سجل العمليات</h2>
             <table class="transactions-table">
@@ -290,7 +295,7 @@
     </div>
 
     <script>
-         // Your web app's Firebase configuration
+        // تهيئة Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCLQT6rj4Y2BIQIBVHo5umje8dhcb58Ik8",
             authDomain: "doyon-4ca32.firebaseapp.com",
@@ -302,95 +307,100 @@
             measurementId: "G-5W8XHCPEKH"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // تهيئة التطبيق
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        firebase.analytics();
 
-        // جعل المتغيرات متاحة عالمياً
-        window.auth = auth;
-        window.db = db;
-        window.transactions = [];
-        window.totalInputAmount = 0;
-        window.totalOutputAmount = 0;
+        let transactions = [];
+        let totalInputAmount = 0;
+        let totalOutputAmount = 0;
 
-        // دالة التحقق من كلمة المرور وإنشاء مستخدم مجهول
-         // تحديث دالة تسجيل الدخول
-        async function checkPassword(event) {
+        // دالة لتحميل البيانات من Firebase
+        function loadDataFromFirebase() {
+            database.ref('transactions').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    transactions = Object.values(data);
+                    updateTotals();
+                    refreshTransactionsTable();
+                }
+            });
+
+            database.ref('totals').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    totalInputAmount = data.totalInput || 0;
+                    totalOutputAmount = data.totalOutput || 0;
+                    updateStatistics();
+                }
+            });
+        }
+
+        // دالة لحفظ البيانات في Firebase
+        function saveDataToFirebase() {
+            database.ref('transactions').set(transactions);
+            database.ref('totals').set({
+                totalInput: totalInputAmount,
+                totalOutput: totalOutputAmount
+            });
+        }
+
+        // دالة التحقق من كلمة المرور
+        function checkPassword(event) {
             event.preventDefault();
             const password = document.getElementById('passwordInput').value;
             if (password === '2022') {
-                try {
-                    await window.signInAnonymously();
-                    document.getElementById('passwordInput').value = '';
-                    document.getElementById('errorMessage').style.display = 'none';
-                } catch (error) {
-                    console.error("Error signing in:", error);
-                    alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
-                    document.getElementById('errorMessage').style.display = 'block';
-                }
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('errorMessage').style.display = 'none';
+                loadDataFromFirebase(); // تحميل البيانات عند تسجيل الدخول
             } else {
                 document.getElementById('errorMessage').style.display = 'block';
                 document.getElementById('passwordInput').value = '';
             }
             return false;
         }
-         
 
-        // دالة تحميل العمليات من Firebase
-       // دالة تحميل العمليات
-        window.loadTransactions = async function() {
-            try {
-                const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
-                const querySnapshot = await getDocs(q);
-                
-                window.transactions = [];
-                window.totalInputAmount = 0;
-                window.totalOutputAmount = 0;
-                
-                document.getElementById('transactionsBody').innerHTML = '';
-                
-                querySnapshot.forEach((doc) => {
-                    const transaction = doc.data();
-                    window.transactions.push(transaction);
-                    
-                    if (transaction.type === 'إدخال للعمل') {
-                        window.totalInputAmount += transaction.amount;
-                    } else {
-                        window.totalOutputAmount += transaction.amount;
-                    }
-                    
-                    addTransactionRow(transaction);
-                });
-                
-                updateStatistics();
-            } catch (error) {
-                console.error("Error loading transactions:", error);
-                alert('حدث خطأ أثناء تحميل البيانات: ' + error.message);
-            }
-        };
-         
+        // دالة تحديث الإجماليات
+        function updateTotals() {
+            totalInputAmount = 0;
+            totalOutputAmount = 0;
+            transactions.forEach(transaction => {
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount += transaction.amount;
+                } else {
+                    totalOutputAmount += transaction.amount;
+                }
+            });
+            updateStatistics();
+        }
+
         // دالة تحديث الإحصائيات
         function updateStatistics() {
             document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ';
             document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ';
-            
-            const profitMargin = totalInputAmount > 0 ? 
-                ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            
+            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
             document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
             document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
+        }
+
+        // دالة تحديث جدول العمليات
+        function refreshTransactionsTable() {
+            const tbody = document.getElementById('transactionsBody');
+            tbody.innerHTML = '';
+            transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime)).forEach(transaction => {
+                addTransactionRow(transaction);
+            });
         }
 
         // دالة إضافة صف جديد للجدول
         function addTransactionRow(transaction) {
             const tbody = document.getElementById('transactionsBody');
             const row = document.createElement('tr');
-            
-            const profitMargin = totalInputAmount > 0 ? 
-                ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-
+            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
             row.innerHTML = `
                 <td>${transaction.datetime}</td>
                 <td>${transaction.type}</td>
@@ -398,178 +408,69 @@
                 <td>${transaction.notes}</td>
                 <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
             `;
-            
             tbody.insertBefore(row, tbody.firstChild);
         }
 
         // معالجة نموذج الإدخال
-         // تحديث معالج نموذج الإدخال
-        document.getElementById('inputForm').addEventListener('submit', async function(e) {
+        document.getElementById('inputForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('inputAmount').value);
             const notes = document.getElementById('inputNotes').value;
-
-            if (!validateInput(amount)) {
-                alert('الرجاء إدخال مبلغ صحيح');
-                return;
-            }
-
+            
             const transaction = {
                 datetime: new Date().toLocaleString('ar-SA'),
                 type: 'إدخال للعمل',
                 amount: amount,
-                notes: notes,
-                timestamp: window.serverTimestamp()
+                notes: notes
             };
-
-            try {
-                await window.addDoc(window.collection(window.db, 'transactions'), transaction);
-                await window.loadTransactions();
-                this.reset();
-            } catch (error) {
-                console.error("Error adding transaction:", error);
-                alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
-            }
+            
+            transactions.push(transaction);
+            totalInputAmount += amount;
+            
+            addTransactionRow(transaction);
+            updateStatistics();
+            saveDataToFirebase(); // حفظ البيانات بعد كل عملية
+            
+            this.reset();
         });
-         
 
         // معالجة نموذج الإخراج
-          // تحديث معالج نموذج الإخراج
-        document.getElementById('outputForm').addEventListener('submit', async function(e) {
+        document.getElementById('outputForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('outputAmount').value);
             const notes = document.getElementById('outputNotes').value;
-
-            if (!validateInput(amount)) {
-                alert('الرجاء إدخال مبلغ صحيح');
-                return;
-            }
-
+            
             const transaction = {
                 datetime: new Date().toLocaleString('ar-SA'),
                 type: 'عائد من العمل',
                 amount: amount,
-                notes: notes,
-                timestamp: window.serverTimestamp()
+                notes: notes
             };
-
-            try {
-                await window.addDoc(window.collection(window.db, 'transactions'), transaction);
-                await window.loadTransactions();
-                this.reset();
-            } catch (error) {
-                console.error("Error adding transaction:", error);
-                alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
-            }
+            
+            transactions.push(transaction);
+            totalOutputAmount += amount;
+            
+            addTransactionRow(transaction);
+            updateStatistics();
+            saveDataToFirebase(); // حفظ البيانات بعد كل عملية
+            
+            this.reset();
         });
-         
+
         // معالجة تسجيل الخروج
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
-            try {
-                await window.signOut();
-                window.transactions = [];
-                window.totalInputAmount = 0;
-                window.totalOutputAmount = 0;
-                document.getElementById('transactionsBody').innerHTML = '';
-                updateStatistics();
-            } catch (error) {
-                console.error("Error signing out:", error);
-                alert('حدث خطأ أثناء تسجيل الخروج: ' + error.message);
-            }
-        });
-         
-
-        // مراقبة حالة المصادقة
-        // إعداد مراقب حالة المصادقة
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('logoutBtn').style.display = 'block';
-                loadTransactions();
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'none';
-            }
-        });
-         
-
-       // معالجة حالة الاتصال بالإنترنت
-        window.addEventListener('online', function() {
-            window.loadTransactions();
-        });
-
-        window.addEventListener('offline', function() {
-            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
-        });
-
-
-        // تحميل البيانات عند بدء التطبيق
-        window.onload = function() {
+        document.getElementById('logoutBtn').addEventListener('click', function() {
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
-        };
-
-        // دالة لتنسيق التاريخ والوقت
-        function formatDateTime(date) {
-            return new Date(date).toLocaleString('ar-SA', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-
-       
-            
-            const profitMargin = window.totalInputAmount > 0 ? 
-                ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
-            
-            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
-            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
-        }
-
-      
-            
-            const profitMargin = window.totalInputAmount > 0 ? 
-                ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
-
-            row.innerHTML = `
-                <td>${transaction.datetime}</td>
-                <td>${transaction.type}</td>
-                <td>${transaction.amount.toFixed(2)} ريال</td>
-                <td>${transaction.notes}</td>
-                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
-            `;
-            
-            tbody.insertBefore(row, tbody.firstChild);
-        }
-
-       
-         
-        // دالة للتحقق من صحة المدخلات
-        function validateInput(amount) {
-            return amount > 0 && !isNaN(amount);
-        }
-
-        // إضافة مستمع للأخطاء غير المعالجة
-        window.addEventListener('unhandledrejection', function(event) {
-            console.error('خطأ غير معالج:', event.reason);
-            alert('حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.');
+            document.getElementById('logoutBtn').style.display = 'none';
+            // إعادة تعيين المتغيرات المحلية
+            transactions = [];
+            totalInputAmount = 0;
+            totalOutputAmount = 0;
+            document.getElementById('transactionsBody').innerHTML = '';
+            updateStatistics();
         });
 
-          // تصدير الدوال للنطاق العالمي
-        window.signInAnonymously = () => signInAnonymously(auth);
-        window.signOut = () => signOut(auth);
-        window.addDoc = addDoc;
-        window.collection = collection;
-        window.serverTimestamp = serverTimestamp;
-
-         
-     // تهيئة التطبيق
+        // التحقق عند تحميل الصفحة
         window.onload = function() {
             document.getElementById('loginOverlay').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
