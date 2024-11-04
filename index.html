@@ -362,7 +362,8 @@ function updateUI() {
 
 // تحديث دالة checkPassword
 function checkPassword(event) {
-    event.preventDefault();
+    event.preventDefault(); // منع السلوك الافتراضي للنموذج
+    
     const password = document.getElementById('passwordInput').value;
     if (password === '2022') {
         document.getElementById('loginOverlay').style.display = 'none';
@@ -370,14 +371,11 @@ function checkPassword(event) {
         document.getElementById('logoutBtn').style.display = 'block';
         document.getElementById('passwordInput').value = '';
         document.getElementById('errorMessage').style.display = 'none';
-        
-        // تحميل البيانات عند تسجيل الدخول
-        loadDataFromFirebase();
     } else {
         document.getElementById('errorMessage').style.display = 'block';
         document.getElementById('passwordInput').value = '';
     }
-    return false;
+    return false; // منع إعادة تحميل الصفحة
 }
 
 // تحديث معالج نموذج الإدخال
