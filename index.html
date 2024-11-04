@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة أموال العمل</title>
+    <!-- إضافة Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.7/firebase-firestore-compat.js"></script>
+    <style>
+    
+        * {
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .login-box button {
+            background-color: #2196f3;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .forms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+
+        .input-section {
+            background-color: #e3f2fd;
+        }
+
+        .output-section {
+            background-color: #e8f5e9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-input {
+            background-color: #2196f3;
+            color: white;
+        }
+
+        .btn-output {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .transactions-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .transactions-table th,
+        .transactions-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: right;
+        }
+
+        .transactions-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .profit {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .loss {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>تسجيل الدخول</h2>
+            <form id="loginForm" onsubmit="return checkPassword(event)">
+                <input type="password" id="passwordInput" placeholder="الرجاء إدخال كلمة المرور" required>
+                <div id="errorMessage" class="error-message">كلمة المرور غير صحيحة</div>
+                <button type="submit">دخول</button>
+            </form>
+        </div>
+    </div>
+
+    <button id="logoutBtn" class="logout-btn" style="display: none;">تسجيل الخروج</button>
+
+    <div id="mainContent" class="container">
+        <h1>نظام إدارة أموال العمل</h1>
+
+        <div class="forms-container">
+            <div class="form-section input-section">
+                <h2>إدخال أموال للعمل</h2>
+                <form id="inputForm">
+                    <div class="form-group">
+                        <label>المبلغ المدخل:</label>
+                        <input type="number" id="inputAmount" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات:</label>
+                        <input type="text" id="inputNotes">
+                    </div>
+                    <button type="submit" class="btn btn-input">إضافة مبلغ للعمل</button>
+                </form>
+            </div>
+
+            <div class="form-section output-section">
+                <h2>إدخال أموال قادمة من العمل</h2>
+                <form id="outputForm">
+                    <div class="form-group">
+                        <label>المبلغ المستلم:</label>
+                        <input type="number" id="outputAmount" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات:</label>
+                        <input type="text" id="outputNotes">
+                    </div>
+                    <button type="submit" class="btn btn-output">تسجيل مبلغ مستلم</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="statistics">
+            <div class="stat-card">
+                <h3>إجمالي المدخلات</h3>
+                <p id="totalInput">0 ريال</p>
+            </div>
+            <div class="stat-card">
+                <h3>إجمالي العائدات</h3>
+                <p id="totalOutput">0 ريال</p>
+            </div>
+            <div class="stat-card">
+                <h3>هامش الربح</h3>
+                <p id="profitMargin">0%</p>
+            </div>
+        </div>
+
+        <div class="summary">
+            <h2>سجل العمليات</h2>
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ والوقت</th>
+                        <th>نوع العملية</th>
+                        <th>المبلغ</th>
+                        <th>ملاحظات</th>
+                        <th>هامش الربح التراكمي</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة Firebase
+
+       <!-- تحديث مكتبات Firebase -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics.js";
+
+
+         // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLQT6rj4Y2BIQIBVHo5umje8dhcb58Ik8",
+            authDomain: "doyon-4ca32.firebaseapp.com",
+            databaseURL: "https://doyon-4ca32-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "doyon-4ca32",
+            storageBucket: "doyon-4ca32.firebasestorage.app",
+            messagingSenderId: "632088822052",
+            appId: "1:632088822052:web:a45b5bfec48f0a60ebf3b1",
+            measurementId: "G-5W8XHCPEKH"
+        };
+
+        // تهيئة Firebase
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // جعل المتغيرات متاحة عالمياً
+        window.auth = auth;
+        window.db = db;
+        window.transactions = [];
+        window.totalInputAmount = 0;
+        window.totalOutputAmount = 0;
+      
+        // دالة التحقق من كلمة المرور وإنشاء مستخدم مجهول
+        async function checkPassword(event) {
+            event.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            if (password === '2022') {
+                try {
+                    await firebase.auth().signInAnonymously();
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    document.getElementById('logoutBtn').style.display = 'block';
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('errorMessage').style.display = 'none';
+                    loadTransactions();
+                } catch (error) {
+                    console.error("Error signing in:", error);
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+            }
+            return false;
+        }
+
+       // دالة تحميل العمليات
+        window.loadTransactions = async function() {
+            try {
+                const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                window.transactions = [];
+                window.totalInputAmount = 0;
+                window.totalOutputAmount = 0;
+                
+                document.getElementById('transactionsBody').innerHTML = '';
+                
+                querySnapshot.forEach((doc) => {
+                    const transaction = doc.data();
+                    window.transactions.push(transaction);
+                    
+                    if (transaction.type === 'إدخال للعمل') {
+                        window.totalInputAmount += transaction.amount;
+                    } else {
+                        window.totalOutputAmount += transaction.amount;
+                    }
+                    
+                    addTransactionRow(transaction);
+                });
+                
+                updateStatistics();
+            } catch (error) {
+                console.error("Error loading transactions:", error);
+                alert('حدث خطأ أثناء تحميل البيانات: ' + error.message);
+            }
+        };
+      
+
+        // دالة تحديث الإحصائيات
+        function updateStatistics() {
+            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ريال';
+            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ريال';
+            
+            const profitMargin = totalInputAmount > 0 ? 
+                ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+            
+            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
+            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
+        }
+
+        // دالة إضافة صف جديد للجدول
+        function addTransactionRow(transaction) {
+            const tbody = document.getElementById('transactionsBody');
+            const row = document.createElement('tr');
+            
+            const profitMargin = totalInputAmount > 0 ? 
+                ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+
+            row.innerHTML = `
+                <td>${transaction.datetime}</td>
+                <td>${transaction.type}</td>
+                <td>${transaction.amount.toFixed(2)} ريال</td>
+                <td>${transaction.notes}</td>
+                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
+            `;
+            
+            tbody.insertBefore(row, tbody.firstChild);
+        }
+
+        // معالجة نموذج الإدخال
+        document.getElementById('inputForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('inputAmount').value);
+            const notes = document.getElementById('inputNotes').value;
+
+            const transaction = {
+                datetime: new Date().toLocaleString('ar-SA'),
+                type: 'إدخال للعمل',
+                amount: amount,
+                notes: notes,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection('transactions').add(transaction);
+                loadTransactions();
+                this.reset();
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+            }
+        });
+
+        // معالجة نموذج الإخراج
+        document.getElementById('outputForm').addEventListener('submit', async function(e) {e.preventDefault();
+            const amount = parseFloat(document.getElementById('outputAmount').value);
+            const notes = document.getElementById('outputNotes').value;
+
+            const transaction = {
+                datetime: new Date().toLocaleString('ar-SA'),
+                type: 'عائد من العمل',
+                amount: amount,
+                notes: notes,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await db.collection('transactions').add(transaction);
+                loadTransactions();
+                this.reset();
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+            }
+        });
+
+        // معالجة تسجيل الخروج
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await firebase.auth().signOut();
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+                // إعادة تعيين المتغيرات
+                transactions = [];
+                totalInputAmount = 0;
+                totalOutputAmount = 0;
+                document.getElementById('transactionsBody').innerHTML = '';
+                updateStatistics();
+            } catch (error) {
+                console.error("Error signing out:", error);
+            }
+        });
+
+        // إعداد مراقب حالة المصادقة
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+                loadTransactions();
+            } else {
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+        });
+
+        // تصدير الدوال للنطاق العالمي
+        window.signInAnonymously = () => signInAnonymously(auth);
+        window.signOut = () => signOut(auth);
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.serverTimestamp = serverTimestamp;
+  
+  
+
+        // التحقق من وجود اتصال بالإنترنت
+        window.addEventListener('online', function() {
+            loadTransactions();
+        });
+
+        window.addEventListener('offline', function() {
+            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
+        });
+
+        // تحميل البيانات عند بدء التطبيق
+        window.onload = function() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        };
+
+        // دالة لتنسيق التاريخ والوقت
+        function formatDateTime(date) {
+            return new Date(date).toLocaleString('ar-SA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+
+         // تحديث دالة تسجيل الدخول
+        async function checkPassword(event) {
+            event.preventDefault();
+            const password = document.getElementById('passwordInput').value;
+            if (password === '2022') {
+                try {
+                    await window.signInAnonymously();
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('errorMessage').style.display = 'none';
+                } catch (error) {
+                    console.error("Error signing in:", error);
+                    alert('حدث خطأ أثناء تسجيل الدخول: ' + error.message);
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+            }
+            return false;
+        }
+
+        // تحديث معالج نموذج الإدخال
+        document.getElementById('inputForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('inputAmount').value);
+            const notes = document.getElementById('inputNotes').value;
+
+            if (!validateInput(amount)) {
+                alert('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+
+            const transaction = {
+                datetime: new Date().toLocaleString('ar-SA'),
+                type: 'إدخال للعمل',
+                amount: amount,
+                notes: notes,
+                timestamp: window.serverTimestamp()
+            };
+
+            try {
+                await window.addDoc(window.collection(window.db, 'transactions'), transaction);
+                await window.loadTransactions();
+                this.reset();
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+                alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
+            }
+        });
+
+        // تحديث معالج نموذج الإخراج
+        document.getElementById('outputForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('outputAmount').value);
+            const notes = document.getElementById('outputNotes').value;
+
+            if (!validateInput(amount)) {
+                alert('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+
+            const transaction = {
+                datetime: new Date().toLocaleString('ar-SA'),
+                type: 'عائد من العمل',
+                amount: amount,
+                notes: notes,
+                timestamp: window.serverTimestamp()
+            };
+
+            try {
+                await window.addDoc(window.collection(window.db, 'transactions'), transaction);
+                await window.loadTransactions();
+                this.reset();
+            } catch (error) {
+                console.error("Error adding transaction:", error);
+                alert('حدث خطأ أثناء حفظ العملية: ' + error.message);
+            }
+        });
+
+        // تحديث معالج تسجيل الخروج
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                await window.signOut();
+                window.transactions = [];
+                window.totalInputAmount = 0;
+                window.totalOutputAmount = 0;
+                document.getElementById('transactionsBody').innerHTML = '';
+                updateStatistics();
+            } catch (error) {
+                console.error("Error signing out:", error);
+                alert('حدث خطأ أثناء تسجيل الخروج: ' + error.message);
+            }
+        });
+
+        // الدوال المساعدة
+        function updateStatistics() {
+            document.getElementById('totalInput').textContent = window.totalInputAmount.toFixed(2) + ' ريال';
+            document.getElementById('totalOutput').textContent = window.totalOutputAmount.toFixed(2) + ' ريال';
+            
+            const profitMargin = window.totalInputAmount > 0 ? 
+                ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
+            
+            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
+            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
+        }
+
+        function addTransactionRow(transaction) {
+            const tbody = document.getElementById('transactionsBody');
+            const row = document.createElement('tr');
+            
+            const profitMargin = window.totalInputAmount > 0 ? 
+                ((window.totalOutputAmount - window.totalInputAmount) / window.totalInputAmount * 100) : 0;
+
+            row.innerHTML = `
+                <td>${transaction.datetime}</td>
+                <td>${transaction.type}</td>
+                <td>${transaction.amount.toFixed(2)} ريال</td>
+                <td>${transaction.notes}</td>
+                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
+            `;
+            
+            tbody.insertBefore(row, tbody.firstChild);
+        }
+
+        function validateInput(amount) {
+            return amount > 0 && !isNaN(amount);
+        }
+
+        // معالجة حالة الاتصال بالإنترنت
+        window.addEventListener('online', function() {
+            window.loadTransactions();
+        });
+
+        window.addEventListener('offline', function() {
+            alert('تم فقد الاتصال بالإنترنت. بعض الوظائف قد لا تعمل حتى يتم استعادة الاتصال.');
+        });
+
+        // تهيئة التطبيق
+        window.onload = function() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        };
+    </script>
+</body>
+</html>
