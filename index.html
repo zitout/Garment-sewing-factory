@@ -283,39 +283,39 @@
                 </form>
             </div>
         </div>
-        <!-- قسم الإحصائيات -->
-        <div class="statistics">
-            <div class="stat-card">
-                <h3>إجمالي المدخلات</h3>
-                <p id="totalInput">0 دج</p>
-            </div>
-            <div class="stat-card">
-                <h3>إجمالي العائدات</h3>
-                <p id="totalOutput">0 دج</p>
-            </div>
-            <div class="stat-card">
-                <h3>هامش الربح</h3>
-                <p id="profitMargin">0%</p>
-            </div>
-        </div>
+       
+       
         <!-- جدول العمليات -->
         <div class="summary">
-            <h2>سجل العمليات</h2>
-            <table class="transactions-table">
-                <thead>
-                    <tr>
-                        <th>التاريخ والوقت</th>
-                        <th>نوع العملية</th>
-                        <th>المبلغ</th>
-                        <th>ملاحظات</th>
-                        <th>هامش الربح التراكمي</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionsBody"></tbody>
-            </table>
+    <h2>سجل العمليات</h2>
+    <table class="transactions-table">
+        <thead>
+            <tr>
+                <th>التاريخ والوقت</th>
+                <th>نوع العملية</th>
+                <th>المبلغ</th>
+                <th>ملاحظات</th>
+                <th>هامش الربح التراكمي</th>
+            </tr>
+        </thead>
+        <tbody id="transactionsBody"></tbody>
+    </table>
+    <div class="statistics">
+        <div class="stat-card">
+            <h3>إجمالي المدخلات</h3>
+            <p id="totalInput">0 دج</p>
+        </div>
+        <div class="stat-card">
+            <h3>إجمالي العائدات</h3>
+            <p id="totalOutput">0 دج</p>
+        </div>
+        <div class="stat-card">
+            <h3>هامش الربح</h3>
+            <p id="profitMargin">0%</p>
         </div>
     </div>
+</div>
+        
     <!-- نافذة تعديل المعاملة -->
     <div id="editModal" class="edit-modal">
         <div class="edit-box">
@@ -335,15 +335,14 @@
             </form>
         </div>
     </div>
-    <script>
-        // المتغيرات العامة
-        let transactions = [];
-        let totalInputAmount = 0;
-        let totalOutputAmount = 0;
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4C6OyDnkWusCe628q49nHmU0EvOA5162DyGKKa8xFANyx956UhnU3AdOfZ3YYJMZT/exec';
+ <script>
+// المتغيرات العامة
+let transactions = [];
+let totalInputAmount = 0;
+let totalOutputAmount = 0;
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4C6OyDnkWusCe628q49nHmU0EvOA5162DyGKKa8xFANyx956UhnU3AdOfZ3YYJMZT/exec';
 
-        // دالة تحميل البيانات من Google Sheets
-      // دالة تحميل البيانات من Google Sheets
+// دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
         const response = await fetch(SCRIPT_URL);
@@ -356,70 +355,49 @@ async function loadTransactions() {
         console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
 
         // تجاهل الصف الأول (العناوين) وتحويل البيانات
-        if (data && Array.isArray(data) && data.length > 1) {
-            data.slice(1).forEach((row) => {
-                if (row && row.length >= 4) {
-                    const transaction = {
-                        datetime: row[0],
-                        type: row[1],
-                        amount: parseFloat(row[2]) || 0,
-                        notes: row[3] || ''
-                    };
-                    
-                    transactions.push(transaction);
-                    if (transaction.type === 'إدخال للعمل') {
-                        totalInputAmount += transaction.amount;
-                    } else {
-                        totalOutputAmount += transaction.amount;
-                    }
-                }
-            });
-        }
+        data.slice(1).forEach(row => {
+            const transaction = {
+                datetime: row[0],
+                type: row[1],
+                amount: parseFloat(row[2]),
+                notes: row[3]
+            };
+            
+            transactions.push(transaction);
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount += transaction.amount;
+            } else {
+                totalOutputAmount += transaction.amount;
+            }
+        });
         
-        console.log("المعاملات بعد المعالجة:", transactions); // للتأكد من معالجة البيانات
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
-        alert("حدث خطأ في تحميل البيانات. يرجى إعادة تحميل الصفحة.");
     }
 }
-        // دالة تحويل تنسيق التاريخ إلى الشكل المطلوب
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const options = { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: '2-digit', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                hour12: false 
-            };
-            // استخدام Intl.DateTimeFormat لتنسيق التاريخ باللغة العربية مع الأرقام الإنجليزية
-            return new Intl.DateTimeFormat('ar-DZ', options).format(date).replace(/\u200E/g, '');
-        }
 
-        // دالة تحديث واجهة المستخدم
-        function updateUI() {
-            const tbody = document.getElementById('transactionsBody');
-            tbody.innerHTML = '';
-            transactions.forEach((transaction, index) => {
-                addTransactionRow(transaction, index);
-            });
-            updateStatistics();
-        }
+// دالة تحديث واجهة المستخدم
+function updateUI() {
+    const tbody = document.getElementById('transactionsBody');
+    tbody.innerHTML = '';
+    transactions.forEach(transaction => {
+        addTransactionRow(transaction);
+    });
+    updateStatistics();
+}
 
-        // دالة تحديث الإحصائيات
-        function updateStatistics() {
-            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' دج';
-            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' دج';
-            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
-            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
-        }
+// دالة تحديث الإحصائيات
+function updateStatistics() {
+    document.getElementById('totalInput').textContent = totalInputAmount.toLocaleString() + ' دج';
+    document.getElementById('totalOutput').textContent = totalOutputAmount.toLocaleString() + ' دج';
+    const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+    document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
+    document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
+}
 
-        // دالة إضافة صف جديد للجدول
-   function addTransactionRow(transaction, index) {
+// دالة إضافة صف جديد للجدول
+function addTransactionRow(transaction) {
     const tbody = document.getElementById('transactionsBody');
     const row = document.createElement('tr');
     const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
@@ -427,196 +405,47 @@ async function loadTransactions() {
     row.innerHTML = `
         <td>${transaction.datetime}</td>
         <td>${transaction.type}</td>
-        <td>${parseFloat(transaction.amount).toLocaleString('en-US')} دج</td>
+        <td>${parseFloat(transaction.amount).toLocaleString()} دج</td>
         <td>${transaction.notes}</td>
         <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
-        <td>
-            <button class="action-btn edit-btn" onclick="openEditModal(${index})">تعديل</button>
-            <button class="action-btn delete-btn" onclick="deleteTransaction(${index})">حذف</button>
-        </td>
     `;
     
     tbody.insertBefore(row, tbody.firstChild);
 }
 
-   // معالجة نموذج الإدخال
-document.getElementById('inputForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const amount = parseFloat(document.getElementById('inputAmount').value);
-    const notes = document.getElementById('inputNotes').value;
+// دالة التحقق من كلمة المرور
+async function checkPassword(event) {
+    event.preventDefault();
+    const password = document.getElementById('passwordInput').value;
     
-    const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ'),
-        type: 'إدخال للعمل',
-        amount: amount,
-        notes: notes
-    };
-    
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(transaction)
-        });
+    if (password === '2022') {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('errorMessage').style.display = 'none';
         
-        if (response.ok) {
-            await loadTransactions(); // إعادة تحميل البيانات بعد الإضافة
-            this.reset();
-            alert('تمت إضافة المعاملة بنجاح');
-        }
-    } catch (error) {
-        console.error("خطأ في حفظ المعاملة:", error);
-        alert('حدث خطأ أثناء حفظ المعاملة');
+        await loadTransactions();
+    } else {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
     }
+    return false;
+}
+
+// معالجة تسجيل الخروج
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
 });
-        
-// معالجة نموذج الإخراج
-document.getElementById('outputForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const amount = parseFloat(document.getElementById('outputAmount').value);
-    const notes = document.getElementById('outputNotes').value;
+
+// التحقق عند تحميل الصفحة
+window.onload = function() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+};
+</script>
     
-    const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ'),
-        type: 'عائد من العمل',
-        amount: amount,
-        notes: notes
-    };
-    
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(transaction)
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            if (result.status === 'success') {
-                // إعادة تحميل البيانات بعد الإضافة
-                await loadTransactions();
-                this.reset();
-                alert('تمت إضافة المعاملة بنجاح');
-            }
-        }
-    } catch (error) {
-        console.error("خطأ في حفظ المعاملة:", error);
-        alert('حدث خطأ أثناء حفظ المعاملة');
-    }
-});
-        // دالة التحقق من كلمة المرور
-        async function checkPassword(event) {
-            event.preventDefault();
-            const password = document.getElementById('passwordInput').value;
-            if (password === '2022') {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('logoutBtn').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('errorMessage').style.display = 'none';
-                // تحميل البيانات عند تسجيل الدخول
-                await loadTransactions();
-            } else {
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('passwordInput').value = '';
-            }
-            return false;
-        }
-
-        // معالجة تسجيل الخروج
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'none';
-        });
-
-        // دالة فتح نافذة التعديل
-        function openEditModal(index) {
-            document.getElementById('editIndex').value = index;
-            document.getElementById('editAmount').value = transactions[index].amount;
-            document.getElementById('editNotes').value = transactions[index].notes;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        // دالة إغلاق نافذة التعديل
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        // معالجة نموذج التعديل
-        document.getElementById('editForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const index = document.getElementById('editIndex').value;
-            const newAmount = parseFloat(document.getElementById('editAmount').value);
-            const newNotes = document.getElementById('editNotes').value;
-            const oldAmount = transactions[index].amount;
-            const oldType = transactions[index].type;
-
-            // تحديث مبالغ الإجمالي
-            if (oldType === 'إدخال للعمل') {
-                totalInputAmount = totalInputAmount - oldAmount + newAmount;
-            } else {
-                totalOutputAmount = totalOutputAmount - oldAmount + newAmount;
-            }
-
-            // تحديث المعاملة
-            transactions[index].amount = newAmount;
-            transactions[index].notes = newNotes;
-
-            // إرسال التحديث إلى الخادم
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=update`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ index: index, transaction: transactions[index] })
-                });
-                if (response.ok) {
-                    updateUI();
-                    closeEditModal();
-                }
-            } catch (error) {
-                console.error("خطأ في تحديث المعاملة:", error);
-            }
-        });
-
-        // دالة حذف المعاملة
-        async function deleteTransaction(index) {
-            const confirmDelete = confirm("هل أنت متأكد من حذف هذه المعاملة؟");
-            if (!confirmDelete) return;
-
-            const transaction = transactions[index];
-            // تحديث مبالغ الإجمالي
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
-            } else {
-                totalOutputAmount -= transaction.amount;
-            }
-
-            // إزالة المعاملة من المصفوفة
-            transactions.splice(index, 1);
-
-            // إرسال الحذف إلى الخادم
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ index: index })
-                });
-                if (response.ok) {
-                    updateUI();
-                }
-            } catch (error) {
-                console.error("خطأ في حذف المعاملة:", error);
-            }
-        }
-
-        // التحقق عند تحميل الصفحة
-        window.onload = function() {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            document.getElementById('mainContent').style.display = 'none';
-        };
-    </script>
 </body>
 </html>
