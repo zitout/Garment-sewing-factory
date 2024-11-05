@@ -345,17 +345,13 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4C6OyDnkWusCe628q4
 // دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
-        const response = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify(transaction)
-});
-
-
+        const response = await fetch(SCRIPT_URL);
         const data = await response.json();
         
         transactions = [];
         totalInputAmount = 0;
         totalOutputAmount = 0;
+
         
         console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
 
