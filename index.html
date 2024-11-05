@@ -288,8 +288,8 @@
         </div>
     </div>
 
-    <script>
-  // المتغيرات العامة
+<script>
+// المتغيرات العامة
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
@@ -340,8 +340,8 @@ function updateUI() {
 
 // دالة تحديث الإحصائيات
 function updateStatistics() {
-    document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' دج';
-    document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' دج';
+    document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' ريال';
+    document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' ريال';
     const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
     document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
     document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
@@ -355,7 +355,7 @@ function addTransactionRow(transaction) {
     row.innerHTML = `
         <td>${transaction.datetime}</td>
         <td>${transaction.type}</td>
-        <td>${parseFloat(transaction.amount).toFixed(2)} دج</td>
+        <td>${parseFloat(transaction.amount).toFixed(2)} ريال</td>
         <td>${transaction.notes}</td>
         <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
     `;
@@ -461,6 +461,7 @@ window.onload = function() {
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('mainContent').style.display = 'none';
 };
-    </script>
+</script>
+
 </body>
 </html>
