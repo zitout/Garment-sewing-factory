@@ -340,37 +340,45 @@
         let transactions = [];
         let totalInputAmount = 0;
         let totalOutputAmount = 0;
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx60vqBocKesRv-8IjoyxAYEVSP-cwNRZqZSvyoezlPeS9ZCQXCCwllFihOAiYORxHo/exec';
+      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx60vqBocKesRv-8IjoyxAYEVSP-cwNRZqZSvyoezlPeS9ZCQXCCwllFihOAiYORxHo/exec';
 
         // دالة تحميل البيانات من Google Sheets
-        async function loadTransactions() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                transactions = [];
-                totalInputAmount = 0;
-                totalOutputAmount = 0;
-                // تجاهل الصف الأول (العناوين) وتحويل البيانات
-                data.slice(1).forEach((row) => {
+      // دالة تحميل البيانات من Google Sheets
+async function loadTransactions() {
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        transactions = [];
+        totalInputAmount = 0;
+        totalOutputAmount = 0;
+        
+        // تجاهل الصف الأول (العناوين) وتحويل البيانات
+        if (data && Array.isArray(data)) {
+            data.slice(1).forEach((row) => {
+                if (row && row.length >= 4) {  // تأكد من وجود جميع البيانات المطلوبة
                     const transaction = {
-                        datetime: formatDate(row[0]),
+                        datetime: row[0],
                         type: row[1],
-                        amount: parseFloat(row[2]),
-                        notes: row[3]
+                        amount: parseFloat(row[2]) || 0,
+                        notes: row[3] || ''
                     };
+                    
                     transactions.push(transaction);
                     if (transaction.type === 'إدخال للعمل') {
                         totalInputAmount += transaction.amount;
                     } else {
                         totalOutputAmount += transaction.amount;
                     }
-                });
-                updateUI();
-            } catch (error) {
-                console.error("خطأ في تحميل البيانات:", error);
-            }
+                }
+            });
         }
-
+        
+        updateUI();
+    } catch (error) {
+        console.error("خطأ في تحميل البيانات:", error);
+    }
+}
         // دالة تحويل تنسيق التاريخ إلى الشكل المطلوب
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -425,27 +433,17 @@
             tbody.insertBefore(row, tbody.firstChild);
         }
 
-        // معالجة نموذج الإدخال
+     // معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const amount = parseFloat(document.getElementById('inputAmount').value);
     const notes = document.getElementById('inputNotes').value;
     
     const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
+        datetime: new Date().toLocaleString('ar-DZ'),
         type: 'إدخال للعمل',
         amount: amount,
-        notes: notes,
-        profitMargin: totalInputAmount > 0 ? 
-            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+        notes: notes
     };
     
     try {
@@ -455,12 +453,13 @@ document.getElementById('inputForm').addEventListener('submit', async function(e
         });
         
         if (response.ok) {
-            totalInputAmount += amount;
-            transactions.push(transaction);
-            addTransactionRow(transaction, transactions.length - 1);
-            updateStatistics();
-            this.reset();
-            alert('تمت إضافة المعاملة بنجاح');
+            const result = await response.json();
+            if (result.status === 'success') {
+                // إعادة تحميل البيانات بعد الإضافة
+                await loadTransactions();
+                this.reset();
+                alert('تمت إضافة المعاملة بنجاح');
+            }
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
@@ -475,20 +474,10 @@ document.getElementById('outputForm').addEventListener('submit', async function(
     const notes = document.getElementById('outputNotes').value;
     
     const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
+        datetime: new Date().toLocaleString('ar-DZ'),
         type: 'عائد من العمل',
         amount: amount,
-        notes: notes,
-        profitMargin: totalInputAmount > 0 ? 
-            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+        notes: notes
     };
     
     try {
@@ -498,12 +487,13 @@ document.getElementById('outputForm').addEventListener('submit', async function(
         });
         
         if (response.ok) {
-            totalOutputAmount += amount;
-            transactions.push(transaction);
-            addTransactionRow(transaction, transactions.length - 1);
-            updateStatistics();
-            this.reset();
-            alert('تمت إضافة المعاملة بنجاح');
+            const result = await response.json();
+            if (result.status === 'success') {
+                // إعادة تحميل البيانات بعد الإضافة
+                await loadTransactions();
+                this.reset();
+                alert('تمت إضافة المعاملة بنجاح');
+            }
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
