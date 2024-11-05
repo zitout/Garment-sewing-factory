@@ -198,6 +198,47 @@
             cursor: pointer;
             z-index: 100;
         }
+
+      
+.edit-btn, .delete-btn {
+    padding: 5px 10px;
+    margin: 0 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-btn {
+    background-color: #ffc107;
+    color: black;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+}
+
+        
     </style>
 </head>
 <body>
@@ -212,6 +253,25 @@
             </form>
         </div>
     </div>
+
+    <!-- نافذة التعديل المنبثقة -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h2>تعديل المعاملة</h2>
+        <form id="editForm">
+            <div class="form-group">
+                <label>المبلغ:</label>
+                <input type="number" id="editAmount" required>
+            </div>
+            <div class="form-group">
+                <label>ملاحظات:</label>
+                <input type="text" id="editNotes">
+            </div>
+            <button type="submit" class="btn btn-input">حفظ التعديلات</button>
+            <button type="button" class="btn" onclick="closeEditModal()">إلغاء</button>
+        </form>
+    </div>
+</div>
 
     <!-- زر تسجيل الخروج -->
     <button id="logoutBtn" class="logout-btn" style="display: none;">تسجيل الخروج</button>
@@ -300,12 +360,10 @@ async function loadTransactions() {
     try {
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
-        
         transactions = [];
         totalInputAmount = 0;
         totalOutputAmount = 0;
-        
-        // تجاهل الصف الأول (العناوين) وتحويل البيانات
+
         data.slice(1).forEach(row => {
             const transaction = {
                 datetime: row[0],
@@ -313,12 +371,12 @@ async function loadTransactions() {
                 amount: parseFloat(row[2]),
                 notes: row[3]
             };
-            
             transactions.push(transaction);
+            
             if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount += parseFloat(transaction.amount);
+                totalInputAmount += transaction.amount;
             } else {
-                totalOutputAmount += parseFloat(transaction.amount);
+                totalOutputAmount += transaction.amount;
             }
         });
         
@@ -326,6 +384,7 @@ async function loadTransactions() {
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
     }
+}
 }
 
 // دالة تحديث واجهة المستخدم
@@ -348,19 +407,125 @@ function updateStatistics() {
 }
 
 // دالة إضافة صف جديد للجدول
-function addTransactionRow(transaction) {
+function addTransactionRow(transaction, index) {
     const tbody = document.getElementById('transactionsBody');
     const row = document.createElement('tr');
-    const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+    const profitMargin = totalInputAmount > 0 ? 
+        ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+    
+    // تنسيق التاريخ باللغة العربية مع أرقام إنجليزية
+    const formattedDate = new Date(transaction.datetime).toLocaleDateString('ar-SA', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        numberingSystem: 'latn'
+    });
+
+    // تنسيق الأرقام باللغة الإنجليزية
+    const formattedAmount = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(transaction.amount);
+
     row.innerHTML = `
-        <td>${transaction.datetime}</td>
+        <td>${formattedDate}</td>
         <td>${transaction.type}</td>
-        <td>${parseFloat(transaction.amount).toFixed(2)} دج</td>
+        <td>${formattedAmount} دج</td>
         <td>${transaction.notes}</td>
-        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
+        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
+            ${profitMargin.toFixed(2)}%
+        </td>
+        <td>
+            <button class="edit-btn" onclick="editTransaction(${index})">تعديل</button>
+            <button class="delete-btn" onclick="deleteTransaction(${index})">حذف</button>
+        </td>
     `;
     tbody.insertBefore(row, tbody.firstChild);
 }
+
+        // دالة فتح نافذة التعديل
+function editTransaction(index) {
+    const transaction = transactions[index];
+    document.getElementById('editAmount').value = transaction.amount;
+    document.getElementById('editNotes').value = transaction.notes;
+    document.getElementById('editModal').style.display = 'block';
+    
+    // حفظ الإندكس الحالي للتعديل
+    document.getElementById('editForm').dataset.index = index;
+}
+
+// دالة إغلاق نافذة التعديل
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// دالة حذف المعاملة
+async function deleteTransaction(index) {
+    if (confirm('هل أنت متأكد من حذف هذه المعاملة؟')) {
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'delete',
+                    index: index
+                })
+            });
+            
+            if (response.ok) {
+                const transaction = transactions[index];
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount -= transaction.amount;
+                } else {
+                    totalOutputAmount -= transaction.amount;
+                }
+                transactions.splice(index, 1);
+                updateUI();
+            }
+        } catch (error) {
+            console.error("خطأ في حذف المعاملة:", error);
+        }
+    }
+}
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const index = parseInt(this.dataset.index);
+    const newAmount = parseFloat(document.getElementById('editAmount').value);
+    const newNotes = document.getElementById('editNotes').value;
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'edit',
+                index: index,
+                amount: newAmount,
+                notes: newNotes
+            })
+        });
+        
+        if (response.ok) {
+            const transaction = transactions[index];
+            // تحديث المبالغ الإجمالية
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount = totalInputAmount - transaction.amount + newAmount;
+            } else {
+                totalOutputAmount = totalOutputAmount - transaction.amount + newAmount;
+            }
+            
+            // تحديث المعاملة
+            transaction.amount = newAmount;
+            transaction.notes = newNotes;
+            
+            updateUI();
+            closeEditModal();
+        }
+    } catch (error) {
+        console.error("خطأ في تعديل المعاملة:", error);
+    }
+});
+
+        
 
 // معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async function(e) {
