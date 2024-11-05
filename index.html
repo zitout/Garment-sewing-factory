@@ -340,7 +340,7 @@
         let transactions = [];
         let totalInputAmount = 0;
         let totalOutputAmount = 0;
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJBGcv75FroxSALE-XCVRm62ZyOdbYpD5Ty1Oq3iIPMdeUkFhrUUrf7zUdecOVaPV-/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4C6OyDnkWusCe628q49nHmU0EvOA5162DyGKKa8xFANyx956UhnU3AdOfZ3YYJMZT/exec';
 
         // دالة تحميل البيانات من Google Sheets
       // دالة تحميل البيانات من Google Sheets
@@ -353,10 +353,12 @@ async function loadTransactions() {
         totalInputAmount = 0;
         totalOutputAmount = 0;
         
+        console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
+
         // تجاهل الصف الأول (العناوين) وتحويل البيانات
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data) && data.length > 1) {
             data.slice(1).forEach((row) => {
-                if (row && row.length >= 4) {  // تأكد من وجود جميع البيانات المطلوبة
+                if (row && row.length >= 4) {
                     const transaction = {
                         datetime: row[0],
                         type: row[1],
@@ -374,9 +376,11 @@ async function loadTransactions() {
             });
         }
         
+        console.log("المعاملات بعد المعالجة:", transactions); // للتأكد من معالجة البيانات
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
+        alert("حدث خطأ في تحميل البيانات. يرجى إعادة تحميل الصفحة.");
     }
 }
         // دالة تحويل تنسيق التاريخ إلى الشكل المطلوب
@@ -415,25 +419,27 @@ async function loadTransactions() {
         }
 
         // دالة إضافة صف جديد للجدول
-        function addTransactionRow(transaction, index) {
-            const tbody = document.getElementById('transactionsBody');
-            const row = document.createElement('tr');
-            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            row.innerHTML = `
-                <td>${transaction.datetime}</td>
-                <td>${transaction.type}</td>
-                <td>${transaction.amount.toFixed(2)} دج</td>
-                <td>${transaction.notes}</td>
-                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
-                <td>
-                    <button class="action-btn edit-btn" onclick="openEditModal(${index})">تعديل</button>
-                    <button class="action-btn delete-btn" onclick="deleteTransaction(${index})">حذف</button>
-                </td>
-            `;
-            tbody.insertBefore(row, tbody.firstChild);
-        }
+   function addTransactionRow(transaction, index) {
+    const tbody = document.getElementById('transactionsBody');
+    const row = document.createElement('tr');
+    const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+    
+    row.innerHTML = `
+        <td>${transaction.datetime}</td>
+        <td>${transaction.type}</td>
+        <td>${parseFloat(transaction.amount).toLocaleString('en-US')} دج</td>
+        <td>${transaction.notes}</td>
+        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
+        <td>
+            <button class="action-btn edit-btn" onclick="openEditModal(${index})">تعديل</button>
+            <button class="action-btn delete-btn" onclick="deleteTransaction(${index})">حذف</button>
+        </td>
+    `;
+    
+    tbody.insertBefore(row, tbody.firstChild);
+}
 
-     // معالجة نموذج الإدخال
+   // معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const amount = parseFloat(document.getElementById('inputAmount').value);
@@ -453,20 +459,16 @@ document.getElementById('inputForm').addEventListener('submit', async function(e
         });
         
         if (response.ok) {
-            const result = await response.json();
-            if (result.status === 'success') {
-                // إعادة تحميل البيانات بعد الإضافة
-                await loadTransactions();
-                this.reset();
-                alert('تمت إضافة المعاملة بنجاح');
-            }
+            await loadTransactions(); // إعادة تحميل البيانات بعد الإضافة
+            this.reset();
+            alert('تمت إضافة المعاملة بنجاح');
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
         alert('حدث خطأ أثناء حفظ المعاملة');
     }
 });
-
+        
 // معالجة نموذج الإخراج
 document.getElementById('outputForm').addEventListener('submit', async function(e) {
     e.preventDefault();
