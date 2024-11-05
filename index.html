@@ -426,67 +426,90 @@
         }
 
         // معالجة نموذج الإدخال
-        document.getElementById('inputForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('inputAmount').value);
-            const notes = document.getElementById('inputNotes').value;
-            const transaction = {
-                datetime: formatDate(new Date()),
-                type: 'إدخال للعمل',
-                amount: amount,
-                notes: notes
-            };
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(transaction)
-                });
-                if (response.ok) {
-                    totalInputAmount += amount;
-                    transactions.push(transaction);
-                    addTransactionRow(transaction, transactions.length - 1);
-                    updateStatistics();
-                    this.reset();
-                }
-            } catch (error) {
-                console.error("خطأ في حفظ المعاملة:", error);
-            }
+document.getElementById('inputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('inputAmount').value);
+    const notes = document.getElementById('inputNotes').value;
+    
+    const transaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: 'إدخال للعمل',
+        amount: amount,
+        notes: notes,
+        profitMargin: totalInputAmount > 0 ? 
+            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+    };
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(transaction)
         });
+        
+        if (response.ok) {
+            totalInputAmount += amount;
+            transactions.push(transaction);
+            addTransactionRow(transaction, transactions.length - 1);
+            updateStatistics();
+            this.reset();
+            alert('تمت إضافة المعاملة بنجاح');
+        }
+    } catch (error) {
+        console.error("خطأ في حفظ المعاملة:", error);
+        alert('حدث خطأ أثناء حفظ المعاملة');
+    }
+});
 
-        // معالجة نموذج الإخراج
-        document.getElementById('outputForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('outputAmount').value);
-            const notes = document.getElementById('outputNotes').value;
-            const transaction = {
-                datetime: formatDate(new Date()),
-                type: 'عائد من العمل',
-                amount: amount,
-                notes: notes
-            };
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(transaction)
-                });
-                if (response.ok) {
-                    totalOutputAmount += amount;
-                    transactions.push(transaction);
-                    addTransactionRow(transaction, transactions.length - 1);
-                    updateStatistics();
-                    this.reset();
-                }
-            } catch (error) {
-                console.error("خطأ في حفظ المعاملة:", error);
-            }
+// معالجة نموذج الإخراج
+document.getElementById('outputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('outputAmount').value);
+    const notes = document.getElementById('outputNotes').value;
+    
+    const transaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: 'عائد من العمل',
+        amount: amount,
+        notes: notes,
+        profitMargin: totalInputAmount > 0 ? 
+            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+    };
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(transaction)
         });
-
+        
+        if (response.ok) {
+            totalOutputAmount += amount;
+            transactions.push(transaction);
+            addTransactionRow(transaction, transactions.length - 1);
+            updateStatistics();
+            this.reset();
+            alert('تمت إضافة المعاملة بنجاح');
+        }
+    } catch (error) {
+        console.error("خطأ في حفظ المعاملة:", error);
+        alert('حدث خطأ أثناء حفظ المعاملة');
+    }
+});
         // دالة التحقق من كلمة المرور
         async function checkPassword(event) {
             event.preventDefault();
