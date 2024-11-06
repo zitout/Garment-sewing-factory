@@ -871,7 +871,7 @@ async function deleteTransaction(index) {
     }
 }
 
-       async function initializeApp() {
+    async function initializeApp() {
     try {
         await loadTransactions();
         updateSystemDate();
@@ -881,8 +881,8 @@ async function deleteTransaction(index) {
         showNotification('حدث خطأ في تهيئة التطبيق', 'error');
     }
 }
-    
-    function updateSystemDate() {
+
+function updateSystemDate() {
     const systemDate = document.getElementById('systemDate');
     systemDate.textContent = formatDate(new Date());
 }
