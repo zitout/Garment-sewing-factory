@@ -368,6 +368,27 @@ body {
     color: #388e3c;
     border: 2px solid #388e3c;
 }
+
+        .logout-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.logout-btn:hover {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+}
         
 
 /* تأثيرات حركية */
@@ -595,6 +616,54 @@ let totalInputAmount = 0;
 let totalOutputAmount = 0;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
 
+
+    // إضافة دالة التحقق من كلمة المرور
+async function checkPassword(event) {
+    event.preventDefault();
+    const password = document.getElementById('passwordInput').value;
+    
+    if (password === '2022') {
+        try {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // تحميل البيانات بعد تسجيل الدخول
+            await loadTransactions();
+            return false;
+        } catch (error) {
+            console.error("خطأ في تسجيل الدخول:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'خطأ',
+                text: 'حدث خطأ أثناء تحميل البيانات. حاول مرة أخرى.',
+                confirmButtonText: 'حسناً'
+            });
+        }
+    } else {
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+    }
+    return false;
+}
+
+// إضافة دالة تسجيل الخروج
+function logout() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('errorMessage').style.display = 'none';
+    transactions = [];
+    totalInputAmount = 0;
+    totalOutputAmount = 0;
+}
+
+// إضافة مستمع حدث لزر تسجيل الخروج
+document.getElementById('logoutBtn').addEventListener('click', logout);
+    
 // دالة تحميل البيانات مع Loading Spinner
 async function loadTransactions() {
     try {
@@ -890,11 +959,13 @@ function hideLoadingSpinner() {
     document.getElementById('loadingSpinner').style.display = 'none';
 }
 
-// إضافة Event Listeners
+// تعديل Event Listeners
 window.addEventListener('load', () => {
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
 });
+
 
 document.getElementById('inputForm').addEventListener('submit', (e) => {
     e.preventDefault();
