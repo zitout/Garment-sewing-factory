@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw78A-3tAuczxT4GM43zVqRJUX3Zebd0UV4ofzgax6cn4pcWgblPxgsCxOFbAzK6tAX/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSQnChYTSfonniTFENs68AECvr8BFnAlG4PeyDC5Cb4jbw1MbkbVjaQsgY9XSuokw_/exec';
 
 
 // دالة تحميل البيانات من Google Sheets
@@ -906,105 +906,50 @@ async function handleTransactionSubmit(formId, type) {
 }
     
 // دالة حذف معاملة مع تأكيد
-// تحديث دالة الحذف في الواجهة الأمامية
 async function deleteTransaction(index) {
     try {
-        const transaction = transactions[index];
-        
-        // التأكد من وجود المعاملة
-        if (!transaction) {
-            throw new Error('المعاملة غير موجودة');
-        }
-
         const result = await Swal.fire({
             title: 'هل أنت متأكد؟',
-            text: `سيتم حذف معاملة بقيمة ${formatCurrency(transaction.amount)}`,
+            text: "لا يمكن التراجع عن هذا الإجراء!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء',
-            showLoaderOnConfirm: true,
-            preConfirm: () => {
-                return new Promise((resolve) => setTimeout(resolve, 500));
-            }
+            cancelButtonText: 'إلغاء'
         });
 
         if (result.isConfirmed) {
             showLoadingSpinner();
+            const transaction = transactions[index];
+            
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount -= transaction.amount;
+            } else {
+                totalOutputAmount -= transaction.amount;
+            }
 
-            // إرسال طلب الحذف مع كافة بيانات المعاملة للمطابقة
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
+            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    action: 'delete',
-                    datetime: transaction.datetime,
-                    type: transaction.type,
-                    amount: transaction.amount,
-                    notes: transaction.notes
-                })
+                body: JSON.stringify({ index })
             });
 
-            const responseData = await response.json();
-
-            if (responseData.success) {
-                // تحديث المجاميع
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount -= parseFloat(transaction.amount);
-                } else {
-                    totalOutputAmount -= parseFloat(transaction.amount);
-                }
-
-                // حذف المعاملة من المصفوفة المحلية
+            if (response.ok) {
                 transactions.splice(index, 1);
-
-                // تحديث واجهة المستخدم
                 await updateUI();
-
                 showNotification('تم حذف المعاملة بنجاح', 'success');
-            } else {
-                throw new Error(responseData.error || 'فشل في حذف المعاملة');
             }
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة: ' + error.message, 'error');
+        showNotification('حدث خطأ في حذف المعاملة', 'error');
     } finally {
         hideLoadingSpinner();
     }
 }
-
-// دالة مساعدة لتحديث هامش الربح
-function updateProfitMargin() {
-    const profitMargin = calculateProfitMargin();
-    const profitMarginElement = document.getElementById('profitMargin');
-    
-    if (profitMarginElement) {
-        const profitIcon = profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-        const profitClass = profitMargin >= 0 ? 'profit' : 'loss';
-        
-        profitMarginElement.innerHTML = `
-            <i class="fas ${profitIcon}"></i>
-            ${profitMargin.toFixed(2)}%
-        `;
-        profitMarginElement.className = profitClass;
-    }
-}
-
-
-
-// دالة مساعدة للتحقق من صحة الاستجابة
-function validateResponse(response) {
-    if (!response.ok) {
-        throw new Error(`فشل في الاتصال بالخادم: ${response.status}`);
-    }
-    return response.json();
-}
-    
 
   
 function updateSystemDate() {
@@ -1040,7 +985,7 @@ function calculateProfitMargin() {
         ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
 }
 
-// تحسين دالة عرض الإشعارات
+// دوال التنبيهات والـ Loading
 function showNotification(message, type) {
     Swal.fire({
         toast: true,
@@ -1049,11 +994,7 @@ function showNotification(message, type) {
         title: message,
         showConfirmButton: false,
         timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer);
-            toast.addEventListener('mouseleave', Swal.resumeTimer);
-        }
+        timerProgressBar: true
     });
 }
 
