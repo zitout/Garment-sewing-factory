@@ -653,6 +653,22 @@ async function loadTransactions() {
     }
 }
 
+    // إضافة دالة تسجيل الخروج
+function logout() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('errorMessage').style.display = 'none';
+    transactions = [];
+    totalInputAmount = 0;
+    totalOutputAmount = 0;
+}
+    // إضافة مستمع حدث لزر تسجيل الخروج
+document.getElementById('logoutBtn').addEventListener('click', logout);
+    
+
+
   // دالة تحويل تنسيق التاريخ إلى الشكل المطلوب
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -669,15 +685,22 @@ async function loadTransactions() {
             return new Intl.DateTimeFormat('ar-DZ', options).format(date).replace(/\u200E/g, '');
         }
 
-        // دالة تحديث واجهة المستخدم
-        function updateUI() {
-            const tbody = document.getElementById('transactionsBody');
-            tbody.innerHTML = '';
-            transactions.forEach((transaction, index) => {
-                addTransactionRow(transaction, index);
-            });
-            updateStatistics();
-        }
+
+// دالة تحديث واجهة المستخدم مع تأثيرات حركية
+async function updateUI() {
+    const tbody = document.getElementById('transactionsBody');
+    tbody.innerHTML = '';
+
+    // إضافة الصفوف مع تأثير حركي
+    transactions.forEach((transaction, index) => {
+        setTimeout(() => {
+            addTransactionRow(transaction, index);
+        }, index * 100);
+    });
+
+    updateStatistics();
+ }
+
 
         // دالة تحديث الإحصائيات
         function updateStatistics() {
