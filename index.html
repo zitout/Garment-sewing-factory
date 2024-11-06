@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxTOhR4w_rVZCHbbfNDAq-uzn9FTuj7amrizXTLoR49UzHtS5VkznohmjpmOhMlwkAg/exec';
 
 
 // دالة تحميل البيانات المبسطة
@@ -836,6 +836,7 @@ async function handleTransactionSubmit(formId, type) {
 }
 
 // تعديل دالة addTransactionRow
+// تعديل دالة addTransactionRow
 function addTransactionRow(transaction, index) {
     const tbody = document.getElementById('transactionsBody');
     const row = document.createElement('tr');
@@ -843,8 +844,6 @@ function addTransactionRow(transaction, index) {
     
     const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
     row.classList.add(transactionClass);
-    
-    const profitMargin = calculateProfitMargin();
     
     row.innerHTML = `
         <td>العملية ${transaction.operationNumber}</td>
@@ -856,16 +855,9 @@ function addTransactionRow(transaction, index) {
         </td>
         <td>${transaction.amount.toFixed(2)} دج</td>
         <td>${transaction.notes || '-'}</td>
-        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
-            <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-            ${profitMargin.toFixed(2)}%
-        </td>
         <td>
             <div class="action-buttons">
-                <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn delete-btn" onclick="deleteTransactionByNumber(${transaction.operationNumber})" title="حذف">
+                <button class="action-btn delete-btn" onclick="deleteTransaction(${transaction.operationNumber})" title="حذف">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -875,12 +867,13 @@ function addTransactionRow(transaction, index) {
     tbody.insertBefore(row, tbody.firstChild);
 }
 
+
 // إضافة دالة حذف بواسطة رقم العملية
-async function deleteTransactionByNumber(operationNumber) {
+async function deleteTransaction(operationNumber) {
     try {
         const result = await Swal.fire({
             title: `حذف العملية رقم ${operationNumber}`,
-            text: "هل أنت متأكد من حذف هذه العملية؟",
+            text: "هل أنت متأكد من حذف هذه المعاملة؟",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -892,53 +885,46 @@ async function deleteTransactionByNumber(operationNumber) {
         if (result.isConfirmed) {
             showLoadingSpinner();
             
-            // البحث عن العملية بواسطة رقمها
-            const transactionIndex = transactions.findIndex(t => t.operationNumber === operationNumber);
-            
-            if (transactionIndex === -1) {
-                throw new Error('لم يتم العثور على العملية');
-            }
-
-            const transaction = transactions[transactionIndex];
-
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
                     action: 'delete',
                     operationNumber: operationNumber
                 })
             });
 
-            if (response.ok) {
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount -= transaction.amount;
-                } else {
-                    totalOutputAmount -= transaction.amount;
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                // تحديث المصفوفة المحلية
+                const index = transactions.findIndex(t => t.operationNumber === operationNumber);
+                if (index !== -1) {
+                    const transaction = transactions[index];
+                    if (transaction.type === 'إدخال للعمل') {
+                        totalInputAmount -= parseFloat(transaction.amount);
+                    } else {
+                        totalOutputAmount -= parseFloat(transaction.amount);
+                    }
+                    transactions.splice(index, 1);
                 }
                 
-                transactions.splice(transactionIndex, 1);
-                
-                // تحديث أرقام العمليات المتبقية
-                transactions.forEach((t, index) => {
-                    if (t.operationNumber > operationNumber) {
-                        t.operationNumber--;
-                    }
-                });
-                
-                updateUI();
+                await updateUI();
                 showNotification(`تم حذف العملية رقم ${operationNumber} بنجاح`, 'success');
+            } else {
+                throw new Error(data.error || 'فشل في حذف المعاملة');
             }
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification(error.message, 'error');
+        showNotification('حدث خطأ في حذف المعاملة', 'error');
     } finally {
         hideLoadingSpinner();
     }
 }
 
-
-    
 
     async function initializeApp() {
     try {
