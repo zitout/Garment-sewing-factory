@@ -828,46 +828,86 @@ async function handleTransactionSubmit(formId, type) {
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
     try {
+        // تأكيد الحذف باستخدام SweetAlert2
         const result = await Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "لا يمكن التراجع عن هذا الإجراء!",
+            title: 'تأكيد الحذف',
+            text: "هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
+            cancelButtonText: 'إلغاء',
+            showLoaderOnConfirm: true,
+            preConfirm: async () => {
+                showLoadingSpinner();
+                try {
+                    // إرسال طلب الحذف إلى Google Apps Script
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            index: index
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('فشل في حذف المعاملة');
+                    }
+
+                    const responseData = await response.json();
+                    if (responseData.status !== 'success') {
+                        throw new Error(responseData.error || 'فشل في حذف المعاملة');
+                    }
+
+                    return responseData;
+                } catch (error) {
+                    Swal.showValidationMessage(`فشل في الحذف: ${error.message}`);
+                } finally {
+                    hideLoadingSpinner();
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
         });
 
         if (result.isConfirmed) {
-            showLoadingSpinner();
-            const transaction = transactions[index];
-            
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
+            // تحديث المصفوفة المحلية وإعادة حساب المجاميع
+            const deletedTransaction = transactions[index];
+            if (deletedTransaction.type === 'إدخال للعمل') {
+                totalInputAmount -= parseFloat(deletedTransaction.amount);
             } else {
-                totalOutputAmount -= transaction.amount;
+                totalOutputAmount -= parseFloat(deletedTransaction.amount);
             }
 
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ index })
+            // حذف المعاملة من المصفوفة المحلية
+            transactions.splice(index, 1);
+
+            // تحديث واجهة المستخدم
+            await updateUI();
+
+            // عرض رسالة نجاح
+            Swal.fire({
+                title: 'تم الحذف!',
+                text: 'تم حذف المعاملة بنجاح',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
             });
 
-            if (response.ok) {
-                transactions.splice(index, 1);
-                await updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
-            }
+            // تحديث الإحصائيات
+            updateStatistics();
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
+        Swal.fire({
+            title: 'خطأ!',
+            text: 'حدث خطأ أثناء حذف المعاملة',
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+        });
     }
 }
 
