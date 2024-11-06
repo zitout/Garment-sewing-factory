@@ -48,378 +48,184 @@
     font-family: 'Cairo', sans-serif;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
     margin: 0;
-    padding: 20px;
+    padding: clamp(10px, 2vw, 20px);
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
     min-height: 100vh;
+    font-size: clamp(14px, 1vw, 16px);
 }
 
 /* تحسينات نافذة تسجيل الدخول */
 .login-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 15px;
 }
-
-        .loading-spinner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #2196f3;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-        
 
 .login-box {
     background: white;
-    padding: 40px;
-    border-radius: 20px;
+    padding: clamp(20px, 4vw, 40px);
+    border-radius: clamp(15px, 2vw, 20px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 400px;
+    width: min(90%, 400px);
     text-align: center;
     animation: fadeIn 0.5s ease;
 }
 
 .login-box h2 {
-    margin-bottom: 25px;
-    color: #2c3e50;
-    font-size: 28px;
+    margin-bottom: clamp(15px, 3vw, 25px);
+    font-size: clamp(20px, 4vw, 28px);
 }
 
 .login-box input {
     width: 100%;
-    padding: 15px;
-    margin: 15px 0;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    text-align: center;
-    transition: border-color 0.3s ease;
-}
-
-.login-box input:focus {
-    border-color: #2196f3;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    padding: clamp(12px, 2vw, 15px);
+    margin: clamp(10px, 2vw, 15px) 0;
+    height: clamp(44px, 6vw, 50px);
+    font-size: clamp(14px, 2vw, 16px);
 }
 
 .login-box button {
-    background: #2196f3;
-    color: white;
-    padding: 15px 40px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-}
-
-.login-box button:hover {
-    background: #1976d2;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
-}
-
-.error-message {
-    color: #f44336;
-    margin-top: 15px;
-    display: none;
-    animation: shake 0.5s ease;
+    width: 100%;
+    height: clamp(44px, 6vw, 50px);
+    font-size: clamp(16px, 2vw, 18px);
+    margin-top: clamp(15px, 3vw, 20px);
 }
 
 /* تحسينات المحتوى الرئيسي */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    display: none;
-    animation: slideUp 0.5s ease;
+    max-width: min(95%, 1200px);
+    margin: 10px auto;
+    padding: clamp(15px, 3vw, 30px);
+    border-radius: clamp(15px, 2vw, 20px);
 }
 
 .forms-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
+    gap: clamp(15px, 3vw, 30px);
+    margin-bottom: clamp(20px, 4vw, 40px);
+}
+
+@media (min-width: 768px) {
+    .forms-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .form-section {
-    padding: 25px;
-    border-radius: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.input-section {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-}
-
-.output-section {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    padding: clamp(15px, 3vw, 25px);
+    border-radius: clamp(10px, 2vw, 15px);
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: clamp(15px, 2vw, 20px);
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 16px;
+    font-size: clamp(14px, 1.5vw, 16px);
+    margin-bottom: clamp(8px, 1vw, 10px);
 }
 
 .form-group input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.form-group input:focus {
-    border-color: #2196f3;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-.btn {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.btn-input {
-    background: #2196f3;
-    color: white;
-}
-
-.btn-input:hover {
-    background: #1976d2;
-}
-
-.btn-output {
-    background: #4caf50;
-    color: white;
-}
-
-.btn-output:hover {
-    background: #388e3c;
+    height: clamp(44px, 6vw, 50px);
+    font-size: clamp(14px, 1.5vw, 16px);
 }
 
 /* تحسينات الإحصائيات */
 .statistics {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-    margin-top: 30px;
+    gap: clamp(15px, 2vw, 25px);
+    margin-top: clamp(20px, 3vw, 30px);
+}
+
+@media (min-width: 768px) {
+    .statistics {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 .stat-card {
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
+    padding: clamp(15px, 2vw, 20px);
+    border-radius: clamp(10px, 2vw, 15px);
 }
 
 .stat-card h3 {
-    color: #2c3e50;
-    margin-bottom: 10px;
-    font-size: 18px;
+    font-size: clamp(16px, 2vw, 18px);
 }
 
 .stat-card p {
-    font-size: 24px;
-    font-weight: 600;
+    font-size: clamp(20px, 3vw, 24px);
 }
 
 /* تحسينات الجدول */
 .transactions-table {
-    width: 100%;
-    margin-top: 30px;
-    border-collapse: separate;
-    border-spacing: 0;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: clamp(20px, 3vw, 30px);
 }
 
-.transactions-table th {
-    background: #2196f3;
-    color: white;
-    padding: 15px;
-    font-weight: 600;
-    text-align: right;
-}
-
+.transactions-table th,
 .transactions-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.transactions-table tr:hover {
-    background: #f5f5f5;
-}
-
-.transactions-table tr:last-child td {
-    border-bottom: none;
+    padding: clamp(10px, 1.5vw, 15px);
+    font-size: clamp(12px, 1.5vw, 14px);
+    white-space: nowrap;
 }
 
 /* تحسينات الأزرار */
 .action-btn {
-    padding: 8px 16px;
-    margin: 3px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    min-width: clamp(36px, 5vw, 44px);
+    height: clamp(36px, 5vw, 44px);
+    padding: clamp(8px, 1vw, 12px);
+    font-size: clamp(14px, 1.5vw, 16px);
 }
 
-.edit-btn {
-    background: #ff9800;
+.transaction-type-badge {
+    padding: clamp(4px, 1vw, 8px) clamp(8px, 1.5vw, 12px);
+    font-size: clamp(12px, 1.5vw, 14px);
 }
 
-.edit-btn:hover {
-    background: #f57c00;
-}
-
-.delete-btn {
-    background: #f44336;
-}
-
-.delete-btn:hover {
-    background: #d32f2f;
-}
-
-        .transaction-type-badge {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.input-badge {
-    background: #e3f2fd;
-    color: #1976d2;
-    border: 2px solid #1976d2;
-}
-
-.output-badge {
-    background: #e8f5e9;
-    color: #388e3c;
-    border: 2px solid #388e3c;
-}
-
-        .logout-btn {
+.logout-btn {
     position: fixed;
-    top: 20px;
-    left: 20px;
-    padding: 10px 20px;
-    background: #f44336;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    z-index: 100;
+    top: clamp(10px, 2vw, 20px);
+    left: clamp(10px, 2vw, 20px);
+    padding: clamp(8px, 1.5vw, 12px) clamp(15px, 2vw, 20px);
+    font-size: clamp(14px, 1.5vw, 16px);
 }
 
-.logout-btn:hover {
-    background: #d32f2f;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-}
-        
-
-/* تأثيرات حركية */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
-}
-
-/* تحسينات التجاوب */
-@media (max-width: 768px) {
-    .forms-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .statistics {
-        grid-template-columns: 1fr;
-    }
-    
+/* تحسينات إضافية للموبايل */
+@media (max-width: 480px) {
     .container {
-        padding: 15px;
+        margin: 5px;
+        padding: 12px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+    }
+
+    .transactions-table {
+        font-size: 12px;
+    }
+}
+
+/* تحسينات للأداء */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
     }
 }
 </style>
