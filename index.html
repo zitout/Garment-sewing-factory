@@ -1153,19 +1153,11 @@ async function handleTransactionSubmit(formId, type) {
   const notes = form.querySelector('[type="text"]').value;
 
   const transaction = {
-    datetime: new Date().toLocaleString('ar-DZ', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }),
+    datetime: new Date().toLocaleString('ar-DZ'),
     type: type,
     amount: amount,
     notes: notes,
-    product: currentProduct // إضافة اسم المنتج للمعاملة
+    product: currentProduct // مهم: إضافة اسم المنتج
   };
 
   try {
@@ -1177,22 +1169,14 @@ async function handleTransactionSubmit(formId, type) {
       },
       body: JSON.stringify({
         ...transaction,
-        product: currentProduct // تأكيد إرسال اسم المنتج
+        product: currentProduct
       })
     });
 
     const result = await response.json();
     
     if (result.success) {
-      if (type === 'إدخال للعمل') {
-        totalInputAmount += amount;
-      } else {
-        totalOutputAmount += amount;
-      }
-      
-      // إعادة تحميل البيانات من الصفحة المحددة
-      await loadTransactions();
-      
+      await loadTransactions(); // إعادة تحميل البيانات
       form.reset();
       showNotification('تمت إضافة المعاملة بنجاح', 'success');
     } else {
@@ -1206,7 +1190,7 @@ async function handleTransactionSubmit(formId, type) {
   }
 }
 
-// تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
+// تحديث دالة loadTransactions لتحميل البيانات حسب المنتج المحدد
 async function loadTransactions() {
   if (!currentProduct) return;
   
@@ -1228,6 +1212,32 @@ async function loadTransactions() {
   }
 }
 
+// دالة للتأكد من اتصال الخادم
+async function checkServerConnection() {
+  try {
+    const response = await fetch(SCRIPT_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return true;
+  } catch (error) {
+    console.error("خطأ في الاتصال بالخادم:", error);
+    showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
+    return false;
+  }
+}
+
+// إضافة فحص الاتصال عند بدء التطبيق
+window.addEventListener('load', async () => {
+  const isConnected = await checkServerConnection();
+  if (isConnected) {
+    // التطبيق جاهز للعمل
+  } else {
+    // عرض رسالة خطأ للمستخدم
+    showNotification('لا يمكن الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
+  }
+});
+    
 // دالة معالجة البيانات المستلمة
 function handleTransactionsData(data) {
   transactions = [];
