@@ -623,24 +623,29 @@ async function loadTransactions() {
         showLoadingSpinner();
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
+        
         transactions = [];
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
         if (Array.isArray(data) && data.length > 1) {
+            // تجاهل الصف الأول (العناوين) وتحويل البيانات
             data.slice(1).forEach(row => {
-                const transaction = {
-                    datetime: row[0],
-                    type: row[1],
-                    amount: parseFloat(row[2]) || 0,
-                    notes: row[3] || ''
-                };
-                transactions.push(transaction);
-                
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount += transaction.amount;
-                } else {
-                    totalOutputAmount += transaction.amount;
+                if (row && row.length >= 4) {
+                    const transaction = {
+                        datetime: row[0],
+                        type: row[1],
+                        amount: parseFloat(row[2]) || 0,
+                        notes: row[3] || ''
+                    };
+
+                    transactions.push(transaction);
+
+                    if (transaction.type === 'إدخال للعمل') {
+                        totalInputAmount += transaction.amount;
+                    } else {
+                        totalOutputAmount += transaction.amount;
+                    }
                 }
             });
         }
@@ -654,18 +659,19 @@ async function loadTransactions() {
     }
 }
     
+    
 // تبسيط دالة checkPassword
+// عند تسجيل الدخول
 function checkPassword(event) {
     event.preventDefault();
     const password = document.getElementById('passwordInput').value;
-    
     if (password === '2022') {
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
         document.getElementById('logoutBtn').style.display = 'block';
         document.getElementById('passwordInput').value = '';
         document.getElementById('errorMessage').style.display = 'none';
-        loadTransactions();
+        loadTransactions(); // استدعاء تحميل البيانات
         return false;
     } else {
         document.getElementById('errorMessage').style.display = 'block';
@@ -673,6 +679,7 @@ function checkPassword(event) {
     }
     return false;
 }
+    
 // إضافة دالة تسجيل الخروج
 function logout() {
     document.getElementById('loginOverlay').style.display = 'flex';
