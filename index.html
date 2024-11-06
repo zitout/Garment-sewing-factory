@@ -627,7 +627,6 @@ async function loadTransactions() {
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        // تجاهل الصف الأول (العناوين) وتحويل البيانات
         if (Array.isArray(data) && data.length > 1) {
             data.slice(1).forEach(row => {
                 const transaction = {
@@ -819,6 +818,7 @@ async function handleTransactionSubmit(formId, type) {
         hideLoadingSpinner();
     }
 }
+
     
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
