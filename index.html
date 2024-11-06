@@ -3,621 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="نظام إدارة أموال العمل - تتبع المدخلات والمخرجات المالية">
-    <meta name="theme-color" content="#2196f3">
-    
     <title>نظام إدارة أموال العمل</title>
-    
-    <!-- إضافة الخطوط -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- إضافة Font Awesome للأيقونات -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- إضافة SweetAlert2 للتنبيهات الجميلة -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- إضافة Animate.css للتأثيرات الحركية -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    
-    <!-- SEO Meta Tags -->
-    <meta name="keywords" content="نظام إدارة أموال, محاسبة, تتبع المال, إدارة مالية">
-    <meta name="author" content="Your Name">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="نظام إدارة أموال العمل">
-    <meta property="og:description" content="نظام متكامل لإدارة وتتبع الأموال">
-    <meta property="og:type" content="website">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-</head>
-    
-  
     <style>
-* {
-    box-sizing: border-box;
-    font-family: 'Cairo', sans-serif;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    margin: 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
-    min-height: 100vh;
-}
-
-/* تحسينات نافذة تسجيل الدخول */
-.login-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-        .loading-spinner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #2196f3;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-        
-
-.login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    animation: fadeIn 0.5s ease;
-}
-
-.login-box h2 {
-    margin-bottom: 25px;
-    color: #2c3e50;
-    font-size: 28px;
-}
-
-.login-box input {
-    width: 100%;
-    padding: 15px;
-    margin: 15px 0;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    text-align: center;
-    transition: border-color 0.3s ease;
-}
-
-.login-box input:focus {
-    border-color: #2196f3;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-.login-box button {
-    background: #2196f3;
-    color: white;
-    padding: 15px 40px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
-    margin-top: 20px;
-    transition: all 0.3s ease;
-}
-
-.login-box button:hover {
-    background: #1976d2;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
-}
-
-.error-message {
-    color: #f44336;
-    margin-top: 15px;
-    display: none;
-    animation: shake 0.5s ease;
-}
-
-/* تحسينات المحتوى الرئيسي */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    display: none;
-    animation: slideUp 0.5s ease;
-}
-
-.forms-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
-}
-
-.form-section {
-    padding: 25px;
-    border-radius: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-}
-
-.input-section {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-}
-
-.output-section {
-    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 16px;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.form-group input:focus {
-    border-color: #2196f3;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-.btn {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 16px;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-
-.btn-input {
-    background: #2196f3;
-    color: white;
-}
-
-.btn-input:hover {
-    background: #1976d2;
-}
-
-.btn-output {
-    background: #4caf50;
-    color: white;
-}
-
-.btn-output:hover {
-    background: #388e3c;
-}
-
-/* تحسينات الإحصائيات */
-.statistics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-    margin-top: 30px;
-}
-
-.stat-card {
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.stat-card h3 {
-    color: #2c3e50;
-    margin-bottom: 10px;
-    font-size: 18px;
-}
-
-.stat-card p {
-    font-size: 24px;
-    font-weight: 600;
-}
-
-/* تحسينات الجدول */
-.transactions-table {
-    width: 100%;
-    margin-top: 30px;
-    border-collapse: separate;
-    border-spacing: 0;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.transactions-table th {
-    background: #2196f3;
-    color: white;
-    padding: 15px;
-    font-weight: 600;
-    text-align: right;
-}
-
-.transactions-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.transactions-table tr:hover {
-    background: #f5f5f5;
-}
-
-.transactions-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* تحسينات الأزرار */
-.action-btn {
-    padding: 8px 16px;
-    margin: 3px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.edit-btn {
-    background: #ff9800;
-}
-
-.edit-btn:hover {
-    background: #f57c00;
-}
-
-.delete-btn {
-    background: #f44336;
-}
-
-.delete-btn:hover {
-    background: #d32f2f;
-}
-
-        .transaction-type-badge {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.input-badge {
-    background: #e3f2fd;
-    color: #1976d2;
-    border: 2px solid #1976d2;
-}
-
-.output-badge {
-    background: #e8f5e9;
-    color: #388e3c;
-    border: 2px solid #388e3c;
-}
-
+        * {
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        /* أنماط نافذة تسجيل الدخول */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-box {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-box h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .login-box button {
+            background-color: #2196f3;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        .error-message {
+            color: #f44336;
+            margin-top: 10px;
+            display: none;
+        }
+        /* أنماط المحتوى الرئيسي */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .forms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .form-section {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+        .input-section {
+            background-color: #e3f2fd;
+        }
+        .output-section {
+            background-color: #e8f5e9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-input {
+            background-color: #2196f3;
+            color: white;
+        }
+        .btn-output {
+            background-color: #4caf50;
+            color: white;
+        }
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .transactions-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .transactions-table th, .transactions-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: right;
+        }
+        .transactions-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .profit {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .loss {
+            color: #f44336;
+            font-weight: bold;
+        }
         .logout-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    padding: 10px 20px;
-    background: #f44336;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    z-index: 100;
-}
-
-.logout-btn:hover {
-    background: #d32f2f;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-}
-        
-
-/* تأثيرات حركية */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
-}
-
-/* تحسينات التجاوب */
-@media (max-width: 768px) {
-    .forms-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .statistics {
-        grid-template-columns: 1fr;
-    }
-    
-    .container {
-        padding: 15px;
-    }
-}
-</style>
-    
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        /* أنماط أزرار تعديل وحذف */
+        .action-btn {
+            padding: 6px 12px;
+            margin: 2px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+        }
+        .edit-btn {
+            background-color: #ff9800;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        /* نمط نافذة التعديل */
+        .edit-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .edit-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .edit-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .edit-box button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            color: white;
+        }
+        .save-btn {
+            background-color: #4caf50;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+        }
+    </style>
 </head>
 <body>
     <!-- نافذة تسجيل الدخول -->
     <div id="loginOverlay" class="login-overlay">
-        <div class="login-box animate__animated animate__fadeIn">
-            <i class="fas fa-lock fa-3x" style="color: #2196f3; margin-bottom: 20px;"></i>
+        <div class="login-box">
             <h2>تسجيل الدخول</h2>
             <form id="loginForm" onsubmit="return checkPassword(event)">
-                <div class="input-group">
-                    <i class="fas fa-key"></i>
-                    <input type="password" id="passwordInput" placeholder="الرجاء إدخال كلمة المرور" required>
-                </div>
-                <div id="errorMessage" class="error-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    كلمة المرور غير صحيحة
-                </div>
-                <button type="submit">
-                    <i class="fas fa-sign-in-alt"></i>
-                    دخول
-                </button>
+                <input type="password" id="passwordInput" placeholder="الرجاء إدخال كلمة المرور" required>
+                <div id="errorMessage" class="error-message">كلمة المرور غير صحيحة</div>
+                <button type="submit">دخول</button>
             </form>
         </div>
     </div>
-
     <!-- زر تسجيل الخروج -->
-    <button id="logoutBtn" class="logout-btn" style="display: none;">
-        <i class="fas fa-sign-out-alt"></i>
-        تسجيل الخروج
-    </button>
-
+    <button id="logoutBtn" class="logout-btn" style="display: none;">تسجيل الخروج</button>
     <!-- المحتوى الرئيسي -->
     <div id="mainContent" class="container">
-        <header class="main-header">
-            <h1>
-                <i class="fas fa-money-check-alt"></i>
-                نظام إدارة أموال العمل
-            </h1>
-            <p class="system-date" id="systemDate"></p>
-        </header>
-
+        <h1>نظام إدارة أموال العمل</h1>
         <div class="forms-container">
             <!-- قسم إدخال أموال العمل -->
-            <div class="form-section input-section animate__animated animate__fadeInLeft">
-                <h2>
-                    <i class="fas fa-arrow-circle-down"></i>
-                    إدخال أموال للعمل
-                </h2>
+            <div class="form-section input-section">
+                <h2>إدخال أموال للعمل</h2>
                 <form id="inputForm">
                     <div class="form-group">
-                        <label>
-                            <i class="fas fa-coins"></i>
-                            المبلغ المدخل:
-                        </label>
+                        <label>المبلغ المدخل:</label>
                         <input type="number" id="inputAmount" required>
                     </div>
                     <div class="form-group">
-                        <label>
-                            <i class="fas fa-comment-alt"></i>
-                            ملاحظات:
-                        </label>
+                        <label>ملاحظات:</label>
                         <input type="text" id="inputNotes">
                     </div>
-                    <button type="submit" class="btn btn-input">
-                        <i class="fas fa-plus-circle"></i>
-                        إضافة مبلغ للعمل
-                    </button>
+                    <button type="submit" class="btn btn-input">إضافة مبلغ للعمل</button>
                 </form>
             </div>
-
             <!-- قسم إدخال الأموال القادمة من العمل -->
-            <div class="form-section output-section animate__animated animate__fadeInRight">
-                <h2>
-                    <i class="fas fa-arrow-circle-up"></i>
-                    إدخال أموال قادمة من العمل
-                </h2>
+            <div class="form-section output-section">
+                <h2>إدخال أموال قادمة من العمل</h2>
                 <form id="outputForm">
                     <div class="form-group">
-                        <label>
-                            <i class="fas fa-coins"></i>
-                            المبلغ المستلم:
-                        </label>
+                        <label>المبلغ المستلم:</label>
                         <input type="number" id="outputAmount" required>
                     </div>
                     <div class="form-group">
-                        <label>
-                            <i class="fas fa-comment-alt"></i>
-                            ملاحظات:
-                        </label>
+                        <label>ملاحظات:</label>
                         <input type="text" id="outputNotes">
                     </div>
-                    <button type="submit" class="btn btn-output">
-                        <i class="fas fa-plus-circle"></i>
-                        تسجيل مبلغ مستلم
-                    </button>
+                    <button type="submit" class="btn btn-output">تسجيل مبلغ مستلم</button>
                 </form>
             </div>
         </div>
-
-        <!-- الإحصائيات -->
-        <div class="statistics animate__animated animate__fadeInUp">
-            <div class="stat-card">
-                <i class="fas fa-money-bill-wave fa-2x"></i>
-                <h3>إجمالي المدخلات</h3>
-                <p id="totalInput">0 دج</p>
-            </div>
-            <div class="stat-card">
-                <i class="fas fa-hand-holding-usd fa-2x"></i>
-                <h3>إجمالي العائدات</h3>
-                <p id="totalOutput">0 دج</p>
-            </div>
-            <div class="stat-card">
-                <i class="fas fa-chart-line fa-2x"></i>
-                <h3>هامش الربح</h3>
-                <p id="profitMargin">0%</p>
-            </div>
-        </div>
-
+       
+       
         <!-- جدول العمليات -->
-        <div class="transactions-section animate__animated animate__fadeIn">
-            <h2>
-                <i class="fas fa-history"></i>
-                سجل العمليات
-            </h2>
-            <div class="table-responsive">
-                <table class="transactions-table">
-                    <thead>
-                        <tr>
-                            <th>التاريخ والوقت</th>
-                            <th>نوع العملية</th>
-                            <th>المبلغ</th>
-                            <th>ملاحظات</th>
-                            <th>هامش الربح التراكمي</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsBody"></tbody>
-                </table>
-            </div>
+        <div class="summary">
+    <h2>سجل العمليات</h2>
+    <table class="transactions-table">
+        <thead>
+            <tr>
+                <th>التاريخ والوقت</th>
+                <th>نوع العملية</th>
+                <th>المبلغ</th>
+                <th>ملاحظات</th>
+                <th>هامش الربح التراكمي</th>
+            </tr>
+        </thead>
+        <tbody id="transactionsBody"></tbody>
+    </table>
+    <div class="statistics">
+        <div class="stat-card">
+            <h3>إجمالي المدخلات</h3>
+            <p id="totalInput">0 دج</p>
+        </div>
+        <div class="stat-card">
+            <h3>إجمالي العائدات</h3>
+            <p id="totalOutput">0 دج</p>
+        </div>
+        <div class="stat-card">
+            <h3>هامش الربح</h3>
+            <p id="profitMargin">0%</p>
         </div>
     </div>
-
+</div>
+        
     <!-- نافذة تعديل المعاملة -->
     <div id="editModal" class="edit-modal">
-        <div class="edit-box animate__animated animate__zoomIn">
-            <h2>
-                <i class="fas fa-edit"></i>
-                تعديل المعاملة
-            </h2>
+        <div class="edit-box">
+            <h2>تعديل المعاملة</h2>
             <form id="editForm">
                 <input type="hidden" id="editIndex">
                 <div class="form-group">
-                    <label>
-                        <i class="fas fa-coins"></i>
-                        المبلغ:
-                    </label>
+                    <label>المبلغ:</label>
                     <input type="number" id="editAmount" required>
                 </div>
                 <div class="form-group">
-                    <label>
-                        <i class="fas fa-comment-alt"></i>
-                        ملاحظات:
-                    </label>
+                    <label>ملاحظات:</label>
                     <input type="text" id="editNotes">
                 </div>
-                <div class="button-group">
-                    <button type="submit" class="save-btn">
-                        <i class="fas fa-save"></i>
-                        حفظ
-                    </button>
-                    <button type="button" class="cancel-btn" onclick="closeEditModal()">
-                        <i class="fas fa-times"></i>
-                        إلغاء
-                    </button>
-                </div>
+                <button type="submit" class="save-btn">حفظ</button>
+                <button type="button" class="cancel-btn" onclick="closeEditModal()">إلغاء</button>
             </form>
         </div>
     </div>
-
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="loading-spinner">
-        <div class="spinner"></div>
-        <p>جاري التحميل...</p>
-    </div>
-</body>
-    
-<script>
+ <script>
 // المتغيرات العامة
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
-
-
-// دالة تحميل البيانات المبسطة
+     
+// دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
         const response = await fetch(SCRIPT_URL);
@@ -627,36 +352,175 @@ async function loadTransactions() {
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        // تحويل البيانات بنفس طريقة الكود الأصلي
+        
+        console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
+
+        // تجاهل الصف الأول (العناوين) وتحويل البيانات
         data.slice(1).forEach(row => {
             const transaction = {
                 datetime: row[0],
                 type: row[1],
-                amount: parseFloat(row[2]) || 0,
-                notes: row[3] || ''
+                amount: parseFloat(row[2]),
+                notes: row[3]
             };
-            transactions.push(transaction);
             
+            transactions.push(transaction);
             if (transaction.type === 'إدخال للعمل') {
                 totalInputAmount += transaction.amount;
             } else {
                 totalOutputAmount += transaction.amount;
             }
         });
-
+        
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ في تحميل البيانات',
-            text: 'تأكد من اتصالك بالإنترنت وصلاحيات الوصول'
-        });
     }
 }
 
-// تبسيط دالة checkPassword
-function checkPassword(event) {
+  // دالة تحويل تنسيق التاريخ إلى الشكل المطلوب
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false 
+            };
+            // استخدام Intl.DateTimeFormat لتنسيق التاريخ باللغة العربية مع الأرقام الإنجليزية
+            return new Intl.DateTimeFormat('ar-DZ', options).format(date).replace(/\u200E/g, '');
+        }
+
+        // دالة تحديث واجهة المستخدم
+        function updateUI() {
+            const tbody = document.getElementById('transactionsBody');
+            tbody.innerHTML = '';
+            transactions.forEach((transaction, index) => {
+                addTransactionRow(transaction, index);
+            });
+            updateStatistics();
+        }
+
+        // دالة تحديث الإحصائيات
+        function updateStatistics() {
+            document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2) + ' دج';
+            document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2) + ' دج';
+            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+            document.getElementById('profitMargin').textContent = profitMargin.toFixed(2) + '%';
+            document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
+        }
+
+        // دالة إضافة صف جديد للجدول
+        function addTransactionRow(transaction, index) {
+            const tbody = document.getElementById('transactionsBody');
+            const row = document.createElement('tr');
+            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
+            row.innerHTML = `
+                <td>${transaction.datetime}</td>
+                <td>${transaction.type}</td>
+                <td>${transaction.amount.toFixed(2)} دج</td>
+                <td>${transaction.notes}</td>
+                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
+                <td>
+                    <button class="action-btn edit-btn" onclick="openEditModal(${index})">تعديل</button>
+                    <button class="action-btn delete-btn" onclick="deleteTransaction(${index})">حذف</button>
+                </td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+        }
+
+        // معالجة نموذج الإدخال
+document.getElementById('inputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('inputAmount').value);
+    const notes = document.getElementById('inputNotes').value;
+    
+    const transaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: 'إدخال للعمل',
+        amount: amount,
+        notes: notes,
+        profitMargin: totalInputAmount > 0 ? 
+            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+    };
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(transaction)
+        });
+        
+        if (response.ok) {
+            totalInputAmount += amount;
+            transactions.push(transaction);
+            addTransactionRow(transaction, transactions.length - 1);
+            updateStatistics();
+            this.reset();
+            alert('تمت إضافة المعاملة بنجاح');
+        }
+    } catch (error) {
+        console.error("خطأ في حفظ المعاملة:", error);
+        alert('حدث خطأ أثناء حفظ المعاملة');
+    }
+});
+
+// معالجة نموذج الإخراج
+document.getElementById('outputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('outputAmount').value);
+    const notes = document.getElementById('outputNotes').value;
+    
+    const transaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: 'عائد من العمل',
+        amount: amount,
+        notes: notes,
+        profitMargin: totalInputAmount > 0 ? 
+            ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100).toFixed(2) + '%' : '0%'
+    };
+    
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(transaction)
+        });
+        
+        if (response.ok) {
+            totalOutputAmount += amount;
+            transactions.push(transaction);
+            addTransactionRow(transaction, transactions.length - 1);
+            updateStatistics();
+            this.reset();
+            alert('تمت إضافة المعاملة بنجاح');
+        }
+    } catch (error) {
+        console.error("خطأ في حفظ المعاملة:", error);
+        alert('حدث خطأ أثناء حفظ المعاملة');
+    }
+});
+
+
+// دالة التحقق من كلمة المرور
+async function checkPassword(event) {
     event.preventDefault();
     const password = document.getElementById('passwordInput').value;
     
@@ -666,292 +530,111 @@ function checkPassword(event) {
         document.getElementById('logoutBtn').style.display = 'block';
         document.getElementById('passwordInput').value = '';
         document.getElementById('errorMessage').style.display = 'none';
-        loadTransactions();
-        return false;
+        
+        await loadTransactions();
     } else {
         document.getElementById('errorMessage').style.display = 'block';
         document.getElementById('passwordInput').value = '';
     }
     return false;
 }
-// إضافة دالة تسجيل الخروج
-function logout() {
+
+// معالجة تسجيل الخروج
+document.getElementById('logoutBtn').addEventListener('click', function() {
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('mainContent').style.display = 'none';
     document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('errorMessage').style.display = 'none';
-    transactions = [];
-    totalInputAmount = 0;
-    totalOutputAmount = 0;
-}
+});
 
-// إضافة مستمع حدث لزر تسجيل الخروج
-document.getElementById('logoutBtn').addEventListener('click', logout);
-    
+   // دالة فتح نافذة التعديل
+        function openEditModal(index) {
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editAmount').value = transactions[index].amount;
+            document.getElementById('editNotes').value = transactions[index].notes;
+            document.getElementById('editModal').style.display = 'flex';
+        }
 
-      
-// دالة تحديث واجهة المستخدم مع تأثيرات حركية
-async function updateUI() {
-    const tbody = document.getElementById('transactionsBody');
-    tbody.innerHTML = '';
+        // دالة إغلاق نافذة التعديل
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
 
-    // إضافة الصفوف مع تأثير حركي
-    transactions.forEach((transaction, index) => {
-        setTimeout(() => {
-            addTransactionRow(transaction, index);
-        }, index * 100);
-    });
+        // معالجة نموذج التعديل
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const index = document.getElementById('editIndex').value;
+            const newAmount = parseFloat(document.getElementById('editAmount').value);
+            const newNotes = document.getElementById('editNotes').value;
+            const oldAmount = transactions[index].amount;
+            const oldType = transactions[index].type;
 
-    updateStatistics();
-    updateCharts(); // دالة جديدة لتحديث الرسوم البيانية
-}
-
-    function updateCharts() {
-    // تحديث الإحصائيات البصرية
-    const totalInputElement = document.getElementById('totalInput');
-    const totalOutputElement = document.getElementById('totalOutput');
-    const profitMarginElement = document.getElementById('profitMargin');
-
-    totalInputElement.innerHTML = `
-        <i class="fas fa-money-bill-wave"></i>
-        ${formatCurrency(totalInputAmount)}
-    `;
-    
-    totalOutputElement.innerHTML = `
-        <i class="fas fa-hand-holding-usd"></i>
-        ${formatCurrency(totalOutputAmount)}
-    `;
-
-    const profitMargin = calculateProfitMargin();
-    const profitIcon = profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-    const profitClass = profitMargin >= 0 ? 'profit' : 'loss';
-    
-    profitMarginElement.innerHTML = `
-        <i class="fas ${profitIcon}"></i>
-        ${profitMargin.toFixed(2)}%
-    `;
-    profitMarginElement.className = profitClass;
-}
-
-// دالة إضافة صف جديد مع تأثيرات حركية
-function addTransactionRow(transaction, index) {
-    const tbody = document.getElementById('transactionsBody');
-    const row = document.createElement('tr');
-    row.classList.add('animate__animated', 'animate__fadeIn');
-    
-    const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
-    row.classList.add(transactionClass);
-    
-    const profitMargin = calculateProfitMargin();
-    
-    row.innerHTML = `
-        <td>${formatDate(transaction.datetime)}</td>
-        <td>
-            <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
-                ${transaction.type}
-            </span>
-        </td>
-        <td>${formatCurrency(transaction.amount)}</td>
-        <td>${transaction.notes || '-'}</td>
-        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
-            <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-            ${profitMargin.toFixed(2)}%
-        </td>
-        <td>
-            <div class="action-buttons">
-                <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn delete-btn" onclick="deleteTransaction(${index})" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </td>
-    `;
-    
-    tbody.insertBefore(row, tbody.firstChild);
-}
-
-// دالة معالجة إضافة معاملة جديدة
-async function handleTransactionSubmit(formId, type) {
-    const form = document.getElementById(formId);
-    const amount = parseFloat(form.querySelector('[type="number"]').value);
-    const notes = form.querySelector('[type="text"]').value;
-
-    if (!amount || amount <= 0) {
-        showNotification('الرجاء إدخال مبلغ صحيح', 'warning');
-        return;
-    }
-
-    try {
-        showLoadingSpinner();
-        const transaction = {
-            datetime: new Date().toISOString(),
-            type: type,
-            amount: amount,
-            notes: notes
-        };
-
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(transaction)
-        });
-
-        if (response.ok) {
-            if (type === 'إدخال للعمل') {
-                totalInputAmount += amount;
+            // تحديث مبالغ الإجمالي
+            if (oldType === 'إدخال للعمل') {
+                totalInputAmount = totalInputAmount - oldAmount + newAmount;
             } else {
-                totalOutputAmount += amount;
+                totalOutputAmount = totalOutputAmount - oldAmount + newAmount;
             }
 
-            transactions.unshift(transaction);
-            await updateUI();
-            form.reset();
-            showNotification('تمت إضافة المعاملة بنجاح', 'success');
-        }
-    } catch (error) {
-        console.error("خطأ في حفظ المعاملة:", error);
-        showNotification('حدث خطأ في حفظ المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
+            // تحديث المعاملة
+            transactions[index].amount = newAmount;
+            transactions[index].notes = newNotes;
 
-// دالة حذف معاملة مع تأكيد
-async function deleteTransaction(index) {
-    try {
-        const result = await Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "لا يمكن التراجع عن هذا الإجراء!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
+            // إرسال التحديث إلى الخادم
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=update`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ index: index, transaction: transactions[index] })
+                });
+                if (response.ok) {
+                    updateUI();
+                    closeEditModal();
+                }
+            } catch (error) {
+                console.error("خطأ في تحديث المعاملة:", error);
+            }
         });
 
-        if (result.isConfirmed) {
-            showLoadingSpinner();
+        // دالة حذف المعاملة
+        async function deleteTransaction(index) {
+            const confirmDelete = confirm("هل أنت متأكد من حذف هذه المعاملة؟");
+            if (!confirmDelete) return;
+
             const transaction = transactions[index];
-            
+            // تحديث مبالغ الإجمالي
             if (transaction.type === 'إدخال للعمل') {
                 totalInputAmount -= transaction.amount;
             } else {
                 totalOutputAmount -= transaction.amount;
             }
 
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ index })
-            });
+            // إزالة المعاملة من المصفوفة
+            transactions.splice(index, 1);
 
-            if (response.ok) {
-                transactions.splice(index, 1);
-                await updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
+            // إرسال الحذف إلى الخادم
+            try {
+                const response = await fetch(`${SCRIPT_URL}?action=delete`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ index: index })
+                });
+                if (response.ok) {
+                    updateUI();
+                }
+            } catch (error) {
+                console.error("خطأ في حذف المعاملة:", error);
             }
         }
-    } catch (error) {
-        console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
 
-    async function initializeApp() {
-    try {
-        await loadTransactions();
-        updateSystemDate();
-        setInterval(updateSystemDate, 60000); // تحديث كل دقيقة
-    } catch (error) {
-        console.error("خطأ في تهيئة التطبيق:", error);
-        showNotification('حدث خطأ في تهيئة التطبيق', 'error');
-    }
-}
-
-function updateSystemDate() {
-    const systemDate = document.getElementById('systemDate');
-    systemDate.textContent = formatDate(new Date());
-}
-    
-
-// دوال مساعدة
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ar-DZ', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    }).format(date);
-}
-
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('ar-DZ', {
-        style: 'currency',
-        currency: 'DZD',
-        minimumFractionDigits: 2
-    }).format(amount);
-}
-
-function calculateProfitMargin() {
-    return totalInputAmount > 0 ? 
-        ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-}
-
-// دوال التنبيهات والـ Loading
-function showNotification(message, type) {
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: type,
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-}
-
-function showLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
-}
-
-function hideLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'none';
-}
-
-// تعديل Event Listeners
-window.addEventListener('load', () => {
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
-});
-
-
-document.getElementById('inputForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleTransactionSubmit('inputForm', 'إدخال للعمل');
-});
-
-document.getElementById('outputForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleTransactionSubmit('outputForm', 'عائد من العمل');
-});
-
-
-</script>
-    
+        // التحقق عند تحميل الصفحة
+        window.onload = function() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        };
+    </script>
 </body>
 </html>
