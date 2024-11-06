@@ -593,20 +593,28 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4C6OyDnkWusCe628q49nHmU0EvOA5162DyGKKa8xFANyx956UhnU3AdOfZ3YYJMZT/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
 
 // دالة تحميل البيانات مع Loading Spinner
 async function loadTransactions() {
     try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL);
-        const data = await response.json();
+        showLoadingSpinner(); // إظهار مؤشر التحميل
         
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            throw new Error('البيانات المستلمة ليست بالتنسيق المتوقع');
+        }
+
         transactions = [];
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        // تحويل البيانات مع التحقق من صحتها
+        // تجاهل الصف الأول (العناوين) وتحويل البيانات
         data.slice(1).forEach(row => {
             if (row && row.length >= 4) {
                 const transaction = {
@@ -626,15 +634,21 @@ async function loadTransactions() {
         });
 
         await updateUI();
-        hideLoadingSpinner();
+        hideLoadingSpinner(); // إخفاء مؤشر التحميل
         showNotification('تم تحميل البيانات بنجاح', 'success');
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
         hideLoadingSpinner();
-        showNotification('حدث خطأ في تحميل البيانات', 'error');
+        // عرض رسالة خطأ أكثر تفصيلاً للمستخدم
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في تحميل البيانات',
+            text: 'تأكد من اتصالك بالإنترنت وأن لديك صلاحية الوصول إلى البيانات',
+            confirmButtonText: 'حسناً',
+            footer: 'يمكنك المحاولة مرة أخرى لاحقاً'
+        });
     }
 }
-
 // دالة تحديث واجهة المستخدم مع تأثيرات حركية
 async function updateUI() {
     const tbody = document.getElementById('transactionsBody');
