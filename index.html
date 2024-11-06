@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyREQIm-T0PqNoaFue-Bwbt_mQk2GZ5bkwuwR_XxR0H_qvApcyQkPr1cLus8tAFLIkp/exec';
 
 
 // دالة تحميل البيانات المبسطة
@@ -825,7 +825,8 @@ async function handleTransactionSubmit(formId, type) {
     }
 }
     
-// دالة حذف معاملة مع تأكيد
+
+// دالة حذف معاملة
 async function deleteTransaction(index) {
     try {
         const result = await Swal.fire({
@@ -841,26 +842,25 @@ async function deleteTransaction(index) {
 
         if (result.isConfirmed) {
             showLoadingSpinner();
-            const transaction = transactions[index];
             
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
-            } else {
-                totalOutputAmount -= transaction.amount;
-            }
-
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ index })
+                body: JSON.stringify({
+                    action: 'delete',
+                    index: index
+                })
             });
 
             if (response.ok) {
-                transactions.splice(index, 1);
-                await updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    transactions.splice(index, 1);
+                    updateUI();
+                    showNotification('تم حذف المعاملة بنجاح', 'success');
+                }
             }
         }
     } catch (error) {
@@ -871,6 +871,39 @@ async function deleteTransaction(index) {
     }
 }
 
+// دالة تعديل معاملة
+async function editTransaction(index, updatedData) {
+    try {
+        showLoadingSpinner();
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'edit',
+                index: index,
+                transaction: updatedData
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status === 'success') {
+                transactions[index] = updatedData;
+                updateUI();
+                showNotification('تم تعديل المعاملة بنجاح', 'success');
+            }
+        }
+    } catch (error) {
+        console.error("خطأ في تعديل المعاملة:", error);
+        showNotification('حدث خطأ في تعديل المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+    
     async function initializeApp() {
     try {
         await loadTransactions();
