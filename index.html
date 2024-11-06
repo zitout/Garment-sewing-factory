@@ -618,9 +618,9 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT
 
 
 // دالة تحميل البيانات المبسطة
+// دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
-        showLoadingSpinner();
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
         
@@ -628,36 +628,32 @@ async function loadTransactions() {
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        if (Array.isArray(data) && data.length > 1) {
-            // تجاهل الصف الأول (العناوين) وتحويل البيانات
-            data.slice(1).forEach(row => {
-                if (row && row.length >= 4) {
-                    const transaction = {
-                        datetime: row[0],
-                        type: row[1],
-                        amount: parseFloat(row[2]) || 0,
-                        notes: row[3] || ''
-                    };
+        
+        console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
 
-                    transactions.push(transaction);
-
-                    if (transaction.type === 'إدخال للعمل') {
-                        totalInputAmount += transaction.amount;
-                    } else {
-                        totalOutputAmount += transaction.amount;
-                    }
-                }
-            });
-        }
+        // تجاهل الصف الأول (العناوين) وتحويل البيانات
+        data.slice(1).forEach(row => {
+            const transaction = {
+                datetime: row[0],
+                type: row[1],
+                amount: parseFloat(row[2]),
+                notes: row[3]
+            };
+            
+            transactions.push(transaction);
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount += transaction.amount;
+            } else {
+                totalOutputAmount += transaction.amount;
+            }
+        });
         
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
-        showNotification('حدث خطأ في تحميل البيانات', 'error');
-    } finally {
-        hideLoadingSpinner();
     }
 }
+    
     
 // تبسيط دالة checkPassword
 function checkPassword(event) {
