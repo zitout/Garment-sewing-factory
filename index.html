@@ -617,50 +617,126 @@ let totalOutputAmount = 0;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5OtK4o_d5IHfIAQdleUgpcwv6gwSFJr6rE3qgolhp5B7tr9iFLMwL8nVwAlYoUhA6/exec';
 
 
-// دالة تحميل البيانات المبسطة
 // دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
+        showLoadingSpinner();
         const response = await fetch(SCRIPT_URL);
-        const data = await response.json();
+        const result = await response.json();
         
-        // إضافة سجل للتأكد من البيانات
-        console.log("البيانات الواردة:", data);
-        
-        if (!Array.isArray(data)) {
-            console.error("البيانات ليست مصفوفة:", data);
-            return;
-        }
+        // التأكد من أن البيانات موجودة وتحتوي على مصفوفة data
+        if (result && result.data) {
+            transactions = [];
+            totalInputAmount = 0;
+            totalOutputAmount = 0;
 
-        transactions = [];
-        totalInputAmount = 0;
-        totalOutputAmount = 0;
+            // تجاهل الصف الأول (العناوين) وتحويل البيانات
+            result.data.slice(1).forEach(row => {
+                if (row.length >= 4) { // التأكد من وجود جميع البيانات المطلوبة
+                    const transaction = {
+                        datetime: row[0],
+                        type: row[1],
+                        amount: parseFloat(row[2]) || 0,
+                        notes: row[3] || '',
+                        profitMargin: row[4] || '0%'
+                    };
 
-        // تجاهل الصف الأول (العناوين) وتحويل البيانات
-        data.slice(1).forEach(row => {
-            if (row && row.length >= 4) {
-                const transaction = {
-                    datetime: row[0],
-                    type: row[1],
-                    amount: parseFloat(row[2]) || 0,
-                    notes: row[3] || ''
-                };
-                transactions.push(transaction);
-                
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount += transaction.amount;
-                } else {
-                    totalOutputAmount += transaction.amount;
+                    transactions.push(transaction);
+
+                    // تحديث المجاميع
+                    if (transaction.type === 'إدخال للعمل') {
+                        totalInputAmount += transaction.amount;
+                    } else {
+                        totalOutputAmount += transaction.amount;
+                    }
                 }
-            }
-        });
+            });
 
-        updateUI();
+            updateUI();
+            console.log("تم تحميل البيانات بنجاح:", transactions);
+        }
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
+        showNotification('حدث خطأ في تحميل البيانات', 'error');
+    } finally {
+        hideLoadingSpinner();
     }
 }
-    
+
+// تحسين دالة updateUI
+function updateUI() {
+    const tbody = document.getElementById('transactionsBody');
+    tbody.innerHTML = ''; // مسح المحتوى القديم
+
+    // ترتيب المعاملات من الأحدث إلى الأقدم
+    transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+    transactions.forEach((transaction, index) => {
+        const row = document.createElement('tr');
+        const profitMargin = calculateProfitMargin();
+        
+        row.classList.add('animate__animated', 'animate__fadeIn');
+        row.classList.add(transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output');
+        
+        row.innerHTML = `
+            <td>${transaction.datetime}</td>
+            <td>
+                <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
+                    ${transaction.type}
+                </span>
+            </td>
+            <td>${formatCurrency(transaction.amount)}</td>
+            <td>${transaction.notes || '-'}</td>
+            <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
+                <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                ${profitMargin.toFixed(2)}%
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteTransaction(${index})" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+
+    // تحديث الإحصائيات
+    document.getElementById('totalInput').textContent = formatCurrency(totalInputAmount);
+    document.getElementById('totalOutput').textContent = formatCurrency(totalOutputAmount);
+    document.getElementById('profitMargin').textContent = `${calculateProfitMargin().toFixed(2)}%`;
+}
+
+// إضافة دالة لتنسيق العملة
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ar-DZ', {
+        style: 'currency',
+        currency: 'DZD',
+        minimumFractionDigits: 2
+    }).format(amount);
+}
+
+// تحسين دالة التهيئة
+async function initializeApp() {
+    try {
+        showLoadingSpinner();
+        await loadTransactions();
+        updateSystemDate();
+        setInterval(updateSystemDate, 60000);
+        showNotification('تم تحميل البيانات بنجاح', 'success');
+    } catch (error) {
+        console.error("خطأ في تهيئة التطبيق:", error);
+        showNotification('حدث خطأ في تهيئة التطبيق', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+ 
     
 // تبسيط دالة checkPassword
 function checkPassword(event) {
@@ -696,39 +772,6 @@ function logout() {
 // إضافة مستمع حدث لزر تسجيل الخروج
 document.getElementById('logoutBtn').addEventListener('click', logout);
     
-
-      
-// دالة تحديث واجهة المستخدم مع تأثيرات حركية
-function updateUI() {
-    const tbody = document.getElementById('transactionsBody');
-    if (!tbody) {
-        console.error("لم يتم العثور على عنصر الجدول");
-        return;
-    }
-
-    // مسح محتوى الجدول
-    tbody.innerHTML = '';
-
-    // التحقق من وجود معاملات
-    if (transactions.length === 0) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `
-            <td colspan="6" style="text-align: center;">
-                لا توجد معاملات حتى الآن
-            </td>
-        `;
-        tbody.appendChild(emptyRow);
-    } else {
-        // إضافة المعاملات للجدول
-        transactions.forEach((transaction, index) => {
-            addTransactionRow(transaction, index);
-        });
-    }
-
-    // تحديث الإحصائيات
-    updateStatistics();
-}
-
     async function checkServerConnection() {
     try {
         const response = await fetch(SCRIPT_URL);
@@ -740,15 +783,6 @@ function updateUI() {
         console.error("خطأ في الاتصال بالخادم:", error);
         showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
         return false;
-    }
-}
-
-// استخدام الدالة قبل تحميل البيانات
-async function initializeApp() {
-    if (await checkServerConnection()) {
-        await loadTransactions();
-        updateSystemDate();
-        setInterval(updateSystemDate, 60000);
     }
 }
 
@@ -917,17 +951,7 @@ async function deleteTransaction(index) {
     }
 }
 
-    async function initializeApp() {
-    try {
-        await loadTransactions();
-        updateSystemDate();
-        setInterval(updateSystemDate, 60000); // تحديث كل دقيقة
-    } catch (error) {
-        console.error("خطأ في تهيئة التطبيق:", error);
-        showNotification('حدث خطأ في تهيئة التطبيق', 'error');
-    }
-}
-
+  
 function updateSystemDate() {
     const systemDate = document.getElementById('systemDate');
     systemDate.textContent = formatDate(new Date());
