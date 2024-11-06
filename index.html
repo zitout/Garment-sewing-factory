@@ -841,20 +841,45 @@ async function deleteTransaction(index) {
         if (result.isConfirmed) {
             showLoadingSpinner();
             
-            // إرسال طلب الحذف بطريقة POST
+            // تحضير البيانات للإرسال
+            const data = {
+                action: 'delete',
+                index: index
+            };
+
+            // إرسال طلب الحذف بالطريقة الصحيحة
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    action: 'delete',
-                    index: index
-                })
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
             });
 
             const responseData = await response.json();
 
             if (responseData.status === 'success') {
-                transactions.splice(index, 1);
-                await loadTransactions(); // إعادة تحميل البيانات
+                // تحديث المصفوفة المحلية
+                transactions = responseData.data.slice(1).map(row => ({
+                    datetime: row[0],
+                    type: row[1],
+                    amount: parseFloat(row[2]),
+                    notes: row[3]
+                }));
+
+                // إعادة حساب المجاميع
+                totalInputAmount = 0;
+                totalOutputAmount = 0;
+                transactions.forEach(transaction => {
+                    if (transaction.type === 'إدخال للعمل') {
+                        totalInputAmount += transaction.amount;
+                    } else {
+                        totalOutputAmount += transaction.amount;
+                    }
+                });
+
+                // تحديث واجهة المستخدم
+                updateUI();
                 showNotification('تم حذف المعاملة بنجاح', 'success');
             } else {
                 throw new Error(responseData.error || 'فشل في حذف المعاملة');
@@ -867,6 +892,7 @@ async function deleteTransaction(index) {
         hideLoadingSpinner();
     }
 }
+    
     
     
 
