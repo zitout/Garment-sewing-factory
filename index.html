@@ -711,6 +711,53 @@ async function updateUI() {
             document.getElementById('profitMargin').className = profitMargin >= 0 ? 'profit' : 'loss';
         }
 
+
+
+
+
+
+
+
+    
+
+     function updateCharts() {
+    // تحديث الإحصائيات البصرية
+    const totalInputElement = document.getElementById('totalInput');
+    const totalOutputElement = document.getElementById('totalOutput');
+    const profitMarginElement = document.getElementById('profitMargin');
+
+    totalInputElement.innerHTML = `
+        <i class="fas fa-money-bill-wave"></i>
+        ${formatCurrency(totalInputAmount)}
+    `;
+    
+    totalOutputElement.innerHTML = `
+        <i class="fas fa-hand-holding-usd"></i>
+        ${formatCurrency(totalOutputAmount)}
+    `;
+
+    const profitMargin = calculateProfitMargin();
+    const profitIcon = profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+    const profitClass = profitMargin >= 0 ? 'profit' : 'loss';
+    
+    profitMarginElement.innerHTML = `
+        <i class="fas ${profitIcon}"></i>
+        ${profitMargin.toFixed(2)}%
+    `;
+    profitMarginElement.className = profitClass;
+}
+
+
+
+
+
+
+
+
+
+
+    
+
         // دالة إضافة صف جديد للجدول
         function addTransactionRow(transaction, index) {
             const tbody = document.getElementById('transactionsBody');
