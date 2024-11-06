@@ -624,30 +624,37 @@ async function loadTransactions() {
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
         
+        // إضافة سجل للتأكد من البيانات
+        console.log("البيانات الواردة:", data);
+        
+        if (!Array.isArray(data)) {
+            console.error("البيانات ليست مصفوفة:", data);
+            return;
+        }
+
         transactions = [];
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        
-        console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
-
         // تجاهل الصف الأول (العناوين) وتحويل البيانات
         data.slice(1).forEach(row => {
-            const transaction = {
-                datetime: row[0],
-                type: row[1],
-                amount: parseFloat(row[2]),
-                notes: row[3]
-            };
-            
-            transactions.push(transaction);
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount += transaction.amount;
-            } else {
-                totalOutputAmount += transaction.amount;
+            if (row && row.length >= 4) {
+                const transaction = {
+                    datetime: row[0],
+                    type: row[1],
+                    amount: parseFloat(row[2]) || 0,
+                    notes: row[3] || ''
+                };
+                transactions.push(transaction);
+                
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount += transaction.amount;
+                } else {
+                    totalOutputAmount += transaction.amount;
+                }
             }
         });
-        
+
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
@@ -692,21 +699,60 @@ document.getElementById('logoutBtn').addEventListener('click', logout);
 
       
 // دالة تحديث واجهة المستخدم مع تأثيرات حركية
-async function updateUI() {
+function updateUI() {
     const tbody = document.getElementById('transactionsBody');
+    if (!tbody) {
+        console.error("لم يتم العثور على عنصر الجدول");
+        return;
+    }
+
+    // مسح محتوى الجدول
     tbody.innerHTML = '';
 
-    // إضافة الصفوف مع تأثير حركي
-    transactions.forEach((transaction, index) => {
-        setTimeout(() => {
+    // التحقق من وجود معاملات
+    if (transactions.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="6" style="text-align: center;">
+                لا توجد معاملات حتى الآن
+            </td>
+        `;
+        tbody.appendChild(emptyRow);
+    } else {
+        // إضافة المعاملات للجدول
+        transactions.forEach((transaction, index) => {
             addTransactionRow(transaction, index);
-        }, index * 100);
-    });
+        });
+    }
 
+    // تحديث الإحصائيات
     updateStatistics();
-    updateCharts(); // دالة جديدة لتحديث الرسوم البيانية
 }
 
+    async function checkServerConnection() {
+    try {
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return true;
+    } catch (error) {
+        console.error("خطأ في الاتصال بالخادم:", error);
+        showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
+        return false;
+    }
+}
+
+// استخدام الدالة قبل تحميل البيانات
+async function initializeApp() {
+    if (await checkServerConnection()) {
+        await loadTransactions();
+        updateSystemDate();
+        setInterval(updateSystemDate, 60000);
+    }
+}
+
+    
     function updateCharts() {
     // تحديث الإحصائيات البصرية
     const totalInputElement = document.getElementById('totalInput');
