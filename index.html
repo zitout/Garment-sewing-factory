@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwx807SyxosuctItK_gjAvUNhR7ONEgh9vAC4GelMMtPGpTxdAs5UYc3u5CjpdY-xOd/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw78A-3tAuczxT4GM43zVqRJUX3Zebd0UV4ofzgax6cn4pcWgblPxgsCxOFbAzK6tAX/exec';
 
 
 // دالة تحميل البيانات من Google Sheets
@@ -906,23 +906,35 @@ async function handleTransactionSubmit(formId, type) {
 }
     
 // دالة حذف معاملة مع تأكيد
+// تحديث دالة الحذف في الواجهة الأمامية
 async function deleteTransaction(index) {
     try {
+        const transaction = transactions[index];
+        
+        // التأكد من وجود المعاملة
+        if (!transaction) {
+            throw new Error('المعاملة غير موجودة');
+        }
+
         const result = await Swal.fire({
             title: 'هل أنت متأكد؟',
-            text: "لا يمكن التراجع عن هذا الإجراء!",
+            text: `سيتم حذف معاملة بقيمة ${formatCurrency(transaction.amount)}`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
+            cancelButtonText: 'إلغاء',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return new Promise((resolve) => setTimeout(resolve, 500));
+            }
         });
 
         if (result.isConfirmed) {
             showLoadingSpinner();
-            const transaction = transactions[index];
-            
+
+            // إرسال طلب الحذف مع كافة بيانات المعاملة للمطابقة
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: {
@@ -930,21 +942,29 @@ async function deleteTransaction(index) {
                 },
                 body: JSON.stringify({
                     action: 'delete',
-                    transactionId: transaction.transactionId // استخدام معرف المعاملة
+                    datetime: transaction.datetime,
+                    type: transaction.type,
+                    amount: transaction.amount,
+                    notes: transaction.notes
                 })
             });
 
             const responseData = await response.json();
 
             if (responseData.success) {
+                // تحديث المجاميع
                 if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount -= transaction.amount;
+                    totalInputAmount -= parseFloat(transaction.amount);
                 } else {
-                    totalOutputAmount -= transaction.amount;
+                    totalOutputAmount -= parseFloat(transaction.amount);
                 }
 
+                // حذف المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
+
+                // تحديث واجهة المستخدم
                 await updateUI();
+
                 showNotification('تم حذف المعاملة بنجاح', 'success');
             } else {
                 throw new Error(responseData.error || 'فشل في حذف المعاملة');
@@ -957,8 +977,7 @@ async function deleteTransaction(index) {
         hideLoadingSpinner();
     }
 }
-    
-    
+
 // دالة مساعدة لتحديث هامش الربح
 function updateProfitMargin() {
     const profitMargin = calculateProfitMargin();
