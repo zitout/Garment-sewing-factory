@@ -841,11 +841,9 @@ async function deleteTransaction(index) {
         if (result.isConfirmed) {
             showLoadingSpinner();
             
+            // إرسال طلب الحذف بطريقة POST
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     action: 'delete',
                     index: index
@@ -855,20 +853,11 @@ async function deleteTransaction(index) {
             const responseData = await response.json();
 
             if (responseData.status === 'success') {
-                // تحديث البيانات المحلية
-                const transaction = transactions[index];
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount -= transaction.amount;
-                } else {
-                    totalOutputAmount -= transaction.amount;
-                }
-                
-                // حذف المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
-                
-                // تحديث واجهة المستخدم
-                updateUI();
+                await loadTransactions(); // إعادة تحميل البيانات
                 showNotification('تم حذف المعاملة بنجاح', 'success');
+            } else {
+                throw new Error(responseData.error || 'فشل في حذف المعاملة');
             }
         }
     } catch (error) {
