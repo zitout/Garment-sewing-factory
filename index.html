@@ -762,21 +762,26 @@ async function updateUI() {
 function addTransactionRow(transaction, index) {
     const tbody = document.getElementById('transactionsBody');
     const row = document.createElement('tr');
+    
+    // إضافة التأثيرات الحركية
     row.classList.add('animate__animated', 'animate__fadeIn');
     
+    // إضافة class للتمييز بين أنواع المعاملات
     const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
     row.classList.add(transactionClass);
     
-    const profitMargin = calculateProfitMargin();
+    // استخدام نفس طريقة حساب هامش الربح من الكود الأصلي
+    const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
     
+    // الاحتفاظ بنفس هيكل البيانات مع إضافة التحسينات الجمالية
     row.innerHTML = `
-        <td>${formatDate(transaction.datetime)}</td>
+        <td>${transaction.datetime}</td>
         <td>
             <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
                 ${transaction.type}
             </span>
         </td>
-        <td>${formatCurrency(transaction.amount)}</td>
+        <td>${transaction.amount.toFixed(2)} دج</td>
         <td>${transaction.notes || '-'}</td>
         <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
             <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
@@ -796,7 +801,6 @@ function addTransactionRow(transaction, index) {
     
     tbody.insertBefore(row, tbody.firstChild);
 }
-
     
 
         // معالجة نموذج الإدخال
