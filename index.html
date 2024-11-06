@@ -390,7 +390,53 @@ body {
     box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
 }
         
+.edit-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
 
+.edit-box {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.save-btn, .cancel-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.save-btn {
+    background: #4caf50;
+    color: white;
+}
+
+.cancel-btn {
+    background: #f44336;
+    color: white;
+}
+        
 /* تأثيرات حركية */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -853,9 +899,9 @@ async function deleteTransaction(index) {
                 })
             });
 
-            const result = await response.json();
+            const data = await response.json();
             
-            if (result.status === 'success') {
+            if (data.status === 'success') {
                 const transaction = transactions[index];
                 if (transaction.type === 'إدخال للعمل') {
                     totalInputAmount -= transaction.amount;
@@ -867,7 +913,7 @@ async function deleteTransaction(index) {
                 updateUI();
                 showNotification('تم حذف المعاملة بنجاح', 'success');
             } else {
-                throw new Error(result.error);
+                throw new Error(data.error || 'حدث خطأ في عملية الحذف');
             }
         }
     } catch (error) {
@@ -876,6 +922,20 @@ async function deleteTransaction(index) {
     } finally {
         hideLoadingSpinner();
     }
+}
+
+// دالة فتح نافذة التعديل
+function openEditModal(index) {
+    const transaction = transactions[index];
+    document.getElementById('editIndex').value = index;
+    document.getElementById('editAmount').value = transaction.amount;
+    document.getElementById('editNotes').value = transaction.notes || '';
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+// دالة إغلاق نافذة التعديل
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
 }
 
 // دالة تعديل معاملة
@@ -895,10 +955,9 @@ async function editTransaction(index, updatedData) {
             })
         });
 
-        const result = await response.json();
+        const data = await response.json();
         
-        if (result.status === 'success') {
-            // تحديث المبالغ الإجمالية
+        if (data.status === 'success') {
             const oldTransaction = transactions[index];
             if (oldTransaction.type === 'إدخال للعمل') {
                 totalInputAmount = totalInputAmount - oldTransaction.amount + updatedData.amount;
@@ -906,12 +965,12 @@ async function editTransaction(index, updatedData) {
                 totalOutputAmount = totalOutputAmount - oldTransaction.amount + updatedData.amount;
             }
             
-            // تحديث المعاملة في المصفوفة
             transactions[index] = updatedData;
             updateUI();
+            closeEditModal();
             showNotification('تم تعديل المعاملة بنجاح', 'success');
         } else {
-            throw new Error(result.error);
+            throw new Error(data.error || 'حدث خطأ في عملية التعديل');
         }
     } catch (error) {
         console.error("خطأ في تعديل المعاملة:", error);
@@ -920,6 +979,32 @@ async function editTransaction(index, updatedData) {
         hideLoadingSpinner();
     }
 }
+
+// إضافة مستمع الحدث لنموذج التعديل
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const index = parseInt(document.getElementById('editIndex').value);
+    const amount = parseFloat(document.getElementById('editAmount').value);
+    const notes = document.getElementById('editNotes').value;
+    
+    const updatedTransaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: transactions[index].type,
+        amount: amount,
+        notes: notes
+    };
+    
+    await editTransaction(index, updatedTransaction);
+});
+    
     
 
     async function initializeApp() {
@@ -945,25 +1030,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
     const amount = parseFloat(document.getElementById('editAmount').value);
     const notes = document.getElementById('editNotes').value;
     
-    const updatedTransaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
-        type: transactions[index].type, // نحتفظ بنفس النوع
-        amount: amount,
-        notes: notes
-    };
-    
-    await editTransaction(index, updatedTransaction);
-    closeEditModal();
-});
-    
+   
 
 // دوال مساعدة
 function formatDate(dateString) {
