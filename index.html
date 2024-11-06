@@ -779,31 +779,41 @@ function addTransactionRow(transaction, index) {
 }
     
 // دالة معالجة إضافة معاملة جديدة
+// تعديل دالة handleTransactionSubmit
 async function handleTransactionSubmit(formId, type) {
     const form = document.getElementById(formId);
     const amount = parseFloat(form.querySelector('[type="number"]').value);
     const notes = form.querySelector('[type="text"]').value;
-
-    const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
-        type: type,
-        amount: amount,
-        notes: notes
-    };
-
+    
     try {
         showLoadingSpinner();
+        
+        // الحصول على عدد الصفوف الحالي للحصول على رقم العملية
+        const currentRowCount = transactions.length;
+        const operationNumber = currentRowCount + 1; // رقم العملية الجديد
+
+        const transaction = {
+            operationNumber: operationNumber, // إضافة رقم العملية
+            datetime: new Date().toLocaleString('ar-DZ', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }),
+            type: type,
+            amount: amount,
+            notes: notes
+        };
+
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(transaction)
+            body: JSON.stringify({
+                ...transaction,
+                action: 'add'
+            })
         });
 
         if (response.ok) {
@@ -815,7 +825,7 @@ async function handleTransactionSubmit(formId, type) {
             transactions.push(transaction);
             updateUI();
             form.reset();
-            showNotification('تمت إضافة المعاملة بنجاح', 'success');
+            showNotification(`تمت إضافة المعاملة رقم ${operationNumber} بنجاح`, 'success');
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
@@ -824,13 +834,53 @@ async function handleTransactionSubmit(formId, type) {
         hideLoadingSpinner();
     }
 }
+
+// تعديل دالة addTransactionRow
+function addTransactionRow(transaction, index) {
+    const tbody = document.getElementById('transactionsBody');
+    const row = document.createElement('tr');
+    row.classList.add('animate__animated', 'animate__fadeIn');
     
-// دالة حذف معاملة مع تأكيد
-async function deleteTransaction(index) {
+    const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
+    row.classList.add(transactionClass);
+    
+    const profitMargin = calculateProfitMargin();
+    
+    row.innerHTML = `
+        <td>العملية ${transaction.operationNumber}</td>
+        <td>${transaction.datetime}</td>
+        <td>
+            <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
+                ${transaction.type}
+            </span>
+        </td>
+        <td>${transaction.amount.toFixed(2)} دج</td>
+        <td>${transaction.notes || '-'}</td>
+        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
+            <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+            ${profitMargin.toFixed(2)}%
+        </td>
+        <td>
+            <div class="action-buttons">
+                <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" onclick="deleteTransactionByNumber(${transaction.operationNumber})" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    tbody.insertBefore(row, tbody.firstChild);
+}
+
+// إضافة دالة حذف بواسطة رقم العملية
+async function deleteTransactionByNumber(operationNumber) {
     try {
         const result = await Swal.fire({
-            title: 'تأكيد الحذف',
-            text: "هل أنت متأكد من حذف هذه المعاملة؟",
+            title: `حذف العملية رقم ${operationNumber}`,
+            text: "هل أنت متأكد من حذف هذه العملية؟",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -842,37 +892,46 @@ async function deleteTransaction(index) {
         if (result.isConfirmed) {
             showLoadingSpinner();
             
+            // البحث عن العملية بواسطة رقمها
+            const transactionIndex = transactions.findIndex(t => t.operationNumber === operationNumber);
+            
+            if (transactionIndex === -1) {
+                throw new Error('لم يتم العثور على العملية');
+            }
+
+            const transaction = transactions[transactionIndex];
+
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     action: 'delete',
-                    index: index
+                    operationNumber: operationNumber
                 })
             });
 
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                const transaction = transactions[index];
+            if (response.ok) {
                 if (transaction.type === 'إدخال للعمل') {
                     totalInputAmount -= transaction.amount;
                 } else {
                     totalOutputAmount -= transaction.amount;
                 }
                 
-                transactions.splice(index, 1);
-                await updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
-            } else {
-                throw new Error(data.error || 'فشل في حذف المعاملة');
+                transactions.splice(transactionIndex, 1);
+                
+                // تحديث أرقام العمليات المتبقية
+                transactions.forEach((t, index) => {
+                    if (t.operationNumber > operationNumber) {
+                        t.operationNumber--;
+                    }
+                });
+                
+                updateUI();
+                showNotification(`تم حذف العملية رقم ${operationNumber} بنجاح`, 'success');
             }
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
+        showNotification(error.message, 'error');
     } finally {
         hideLoadingSpinner();
     }
