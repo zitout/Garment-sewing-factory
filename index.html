@@ -617,38 +617,63 @@ let totalOutputAmount = 0;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
 
 
-    // إضافة دالة التحقق من كلمة المرور
-async function checkPassword(event) {
+// دالة تحميل البيانات المبسطة
+async function loadTransactions() {
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        transactions = [];
+        totalInputAmount = 0;
+        totalOutputAmount = 0;
+
+        // تحويل البيانات بنفس طريقة الكود الأصلي
+        data.slice(1).forEach(row => {
+            const transaction = {
+                datetime: row[0],
+                type: row[1],
+                amount: parseFloat(row[2]) || 0,
+                notes: row[3] || ''
+            };
+            transactions.push(transaction);
+            
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount += transaction.amount;
+            } else {
+                totalOutputAmount += transaction.amount;
+            }
+        });
+
+        updateUI();
+    } catch (error) {
+        console.error("خطأ في تحميل البيانات:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في تحميل البيانات',
+            text: 'تأكد من اتصالك بالإنترنت وصلاحيات الوصول'
+        });
+    }
+}
+
+// تبسيط دالة checkPassword
+function checkPassword(event) {
     event.preventDefault();
     const password = document.getElementById('passwordInput').value;
     
     if (password === '2022') {
-        try {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-            document.getElementById('logoutBtn').style.display = 'block';
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('errorMessage').style.display = 'none';
-            
-            // تحميل البيانات بعد تسجيل الدخول
-            await loadTransactions();
-            return false;
-        } catch (error) {
-            console.error("خطأ في تسجيل الدخول:", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'خطأ',
-                text: 'حدث خطأ أثناء تحميل البيانات. حاول مرة أخرى.',
-                confirmButtonText: 'حسناً'
-            });
-        }
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('errorMessage').style.display = 'none';
+        loadTransactions();
+        return false;
     } else {
         document.getElementById('errorMessage').style.display = 'block';
         document.getElementById('passwordInput').value = '';
     }
     return false;
 }
-
 // إضافة دالة تسجيل الخروج
 function logout() {
     document.getElementById('loginOverlay').style.display = 'flex';
@@ -664,60 +689,8 @@ function logout() {
 // إضافة مستمع حدث لزر تسجيل الخروج
 document.getElementById('logoutBtn').addEventListener('click', logout);
     
-// دالة تحميل البيانات مع Loading Spinner
-async function loadTransactions() {
-    try {
-        showLoadingSpinner(); // إظهار مؤشر التحميل
-        
-        const response = await fetch(SCRIPT_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-            throw new Error('البيانات المستلمة ليست بالتنسيق المتوقع');
-        }
 
-        transactions = [];
-        totalInputAmount = 0;
-        totalOutputAmount = 0;
-
-        // تجاهل الصف الأول (العناوين) وتحويل البيانات
-        data.slice(1).forEach(row => {
-            if (row && row.length >= 4) {
-                const transaction = {
-                    datetime: row[0],
-                    type: row[1],
-                    amount: parseFloat(row[2]) || 0,
-                    notes: row[3] || ''
-                };
-                transactions.push(transaction);
-                
-                if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount += transaction.amount;
-                } else {
-                    totalOutputAmount += transaction.amount;
-                }
-            }
-        });
-
-        await updateUI();
-        hideLoadingSpinner(); // إخفاء مؤشر التحميل
-        showNotification('تم تحميل البيانات بنجاح', 'success');
-    } catch (error) {
-        console.error("خطأ في تحميل البيانات:", error);
-        hideLoadingSpinner();
-        // عرض رسالة خطأ أكثر تفصيلاً للمستخدم
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ في تحميل البيانات',
-            text: 'تأكد من اتصالك بالإنترنت وأن لديك صلاحية الوصول إلى البيانات',
-            confirmButtonText: 'حسناً',
-            footer: 'يمكنك المحاولة مرة أخرى لاحقاً'
-        });
-    }
-}
+      
 // دالة تحديث واجهة المستخدم مع تأثيرات حركية
 async function updateUI() {
     const tbody = document.getElementById('transactionsBody');
