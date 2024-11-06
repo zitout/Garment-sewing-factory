@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywxCQ7y-pRPpBC1S5o2vbb9xk4ZiW3NHGD4yJjPW2DDVxfYq3AnSjdJy2dqy-PECgm/exec';
 
 
 // دالة تحميل البيانات المبسطة
@@ -704,7 +704,7 @@ async function updateUI() {
     });
 
     updateStatistics();
-    updateCharts(); // دالة جديدة لتحديث الرسوم البيانية
+   
 }
 
     function updateCharts() {
@@ -827,73 +827,130 @@ async function handleTransactionSubmit(formId, type) {
     
 async function deleteTransaction(index) {
     try {
+        // تأكيد الحذف باستخدام SweetAlert2
         const result = await Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "لا يمكن التراجع عن هذا الإجراء!",
+            title: 'تأكيد الحذف',
+            text: "هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
+            cancelButtonText: 'إلغاء',
+            showLoaderOnConfirm: true,
+            preConfirm: async () => {
+                showLoadingSpinner();
+                try {
+                    // إرسال طلب الحذف إلى Google Apps Script
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            index: index
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('فشل في حذف المعاملة');
+                    }
+
+                    const responseData = await response.json();
+                    if (responseData.status !== 'success') {
+                        throw new Error(responseData.error || 'فشل في حذف المعاملة');
+                    }
+
+                    return responseData;
+                } catch (error) {
+                    Swal.showValidationMessage(`فشل في الحذف: ${error.message}`);
+                } finally {
+                    hideLoadingSpinner();
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
         });
 
         if (result.isConfirmed) {
-            showLoadingSpinner();
-            
-            // تحضير البيانات للإرسال
-            const data = {
-                action: 'delete',
-                index: index
-            };
+            // تحديث المصفوفة المحلية وإعادة حساب المجاميع
+            const deletedTransaction = transactions[index];
+            if (deletedTransaction.type === 'إدخال للعمل') {
+                totalInputAmount -= parseFloat(deletedTransaction.amount);
+            } else {
+                totalOutputAmount -= parseFloat(deletedTransaction.amount);
+            }
 
-            // إرسال طلب الحذف بالطريقة الصحيحة
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
+            // حذف المعاملة من المصفوفة المحلية
+            transactions.splice(index, 1);
+
+            // تحديث واجهة المستخدم
+            await updateUI();
+
+            // عرض رسالة نجاح
+            Swal.fire({
+                title: 'تم الحذف!',
+                text: 'تم حذف المعاملة بنجاح',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
             });
 
-            const responseData = await response.json();
-
-            if (responseData.status === 'success') {
-                // تحديث المصفوفة المحلية
-                transactions = responseData.data.slice(1).map(row => ({
-                    datetime: row[0],
-                    type: row[1],
-                    amount: parseFloat(row[2]),
-                    notes: row[3]
-                }));
-
-                // إعادة حساب المجاميع
-                totalInputAmount = 0;
-                totalOutputAmount = 0;
-                transactions.forEach(transaction => {
-                    if (transaction.type === 'إدخال للعمل') {
-                        totalInputAmount += transaction.amount;
-                    } else {
-                        totalOutputAmount += transaction.amount;
-                    }
-                });
-
-                // تحديث واجهة المستخدم
-                updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
-            } else {
-                throw new Error(responseData.error || 'فشل في حذف المعاملة');
-            }
+            // تحديث الإحصائيات
+            updateStatistics();
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
+        Swal.fire({
+            title: 'خطأ!',
+            text: 'حدث خطأ أثناء حذف المعاملة',
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+        });
     }
 }
+
     
+     * دالة تحديث الإحصائيات
+ */
+function updateStatistics() {
+    const totalInputElement = document.getElementById('totalInput');
+    const totalOutputElement = document.getElementById('totalOutput');
+    const profitMarginElement = document.getElementById('profitMargin');
+
+    // تحديث العرض بتنسيق العملة
+    totalInputElement.textContent = formatCurrency(totalInputAmount);
+    totalOutputElement.textContent = formatCurrency(totalOutputAmount);
+
+    // حساب وعرض هامش الربح
+    const profitMargin = calculateProfitMargin();
+    profitMarginElement.textContent = `${profitMargin.toFixed(2)}%`;
     
+    // تحديث لون هامش الربح بناءً على القيمة
+    profitMarginElement.className = profitMargin >= 0 ? 'positive' : 'negative';
+}
+
+/**
+ * دالة تنسيق العملة
+ */
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ar-DZ', {
+        style: 'currency',
+        currency: 'DZD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(amount);
+}
+
+/**
+ * دالة حساب هامش الربح
+ */
+function calculateProfitMargin() {
+    if (totalInputAmount === 0) return 0;
+    return ((totalOutputAmount - totalInputAmount) / totalInputAmount) * 100;
+}
+
+
     
 
 function updateSystemDate() {
@@ -924,10 +981,7 @@ function formatCurrency(amount) {
     }).format(amount);
 }
 
-function calculateProfitMargin() {
-    return totalInputAmount > 0 ? 
-        ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-}
+
 
 // دوال التنبيهات والـ Loading
 function showNotification(message, type) {
