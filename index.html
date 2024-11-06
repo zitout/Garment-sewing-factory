@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOrItwdESLEAEzHW_XhUTBRNNHM7UcLr--fuUm7aX2vqItlQ4ucaxpSSGx9RtONjj9/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwx807SyxosuctItK_gjAvUNhR7ONEgh9vAC4GelMMtPGpTxdAs5UYc3u5CjpdY-xOd/exec';
 
 
 // دالة تحميل البيانات من Google Sheets
@@ -930,28 +930,21 @@ async function deleteTransaction(index) {
                 },
                 body: JSON.stringify({
                     action: 'delete',
-                    datetime: transaction.datetime,
-                    type: transaction.type,
-                    amount: transaction.amount
+                    transactionId: transaction.transactionId // استخدام معرف المعاملة
                 })
             });
 
             const responseData = await response.json();
 
             if (responseData.success) {
-                // تحديث المجاميع المحلية
                 if (transaction.type === 'إدخال للعمل') {
                     totalInputAmount -= transaction.amount;
                 } else {
                     totalOutputAmount -= transaction.amount;
                 }
 
-                // حذف المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
-                
-                // تحديث واجهة المستخدم
                 await updateUI();
-                
                 showNotification('تم حذف المعاملة بنجاح', 'success');
             } else {
                 throw new Error(responseData.error || 'فشل في حذف المعاملة');
@@ -964,7 +957,7 @@ async function deleteTransaction(index) {
         hideLoadingSpinner();
     }
 }
-
+    
     
 // دالة مساعدة لتحديث هامش الربح
 function updateProfitMargin() {
