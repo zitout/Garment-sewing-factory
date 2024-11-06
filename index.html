@@ -813,7 +813,7 @@ let totalInputAmount = 0;
 let totalOutputAmount = 0;
 let currentProduct = null;
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpiyQtneq1OZhmFb9kwXX05xLqHGpIqOtjmJitMdBcoyCYegzwZGqrFE1jMOES-YTw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_AAeYIN1Gdh1Qq4QAolsIdFU4tueUWkW-Jt9my39lozn6x6WkbwUQ-zWGVH4YrRfD/exec';
 
 
 // دالة تحميل البيانات من Google Sheets
@@ -995,33 +995,48 @@ async function loadProducts() {
 // دالة إنشاء منتج جديد
 async function createNewProduct(event) {
   event.preventDefault();
-  const productName = document.getElementById('newProductName').value;
+  const productName = document.getElementById('newProductName').value.trim();
   
+  if (!productName) {
+    showNotification('يرجى إدخال اسم المنتج', 'error');
+    return;
+  }
+
   showLoadingSpinner();
   try {
+    // تغيير طريقة إرسال البيانات لتتوافق مع السكريبت
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         action: 'createProduct',
         productName: productName
       })
     });
-    
+
     const result = await response.json();
+    
     if (result.success) {
-      showNotification('تم إنشاء المنتج بنجاح', 'success');
+      showNotification(`تم إنشاء المنتج ${productName} بنجاح`, 'success');
+      document.getElementById('newProductName').value = '';
+      
+      // اختيار المنتج الجديد مباشرة
       selectProduct(productName);
+      
+      // إعادة تحميل قائمة المنتجات
+      await loadProducts();
     } else {
-      showNotification(result.data.error || 'حدث خطأ في إنشاء المنتج', 'error');
+      throw new Error(result.data.error || 'فشل في إنشاء المنتج');
     }
   } catch (error) {
     console.error("خطأ في إنشاء المنتج:", error);
-    showNotification('حدث خطأ في إنشاء المنتج', 'error');
+    showNotification(error.message || 'حدث خطأ في إنشاء المنتج', 'error');
   } finally {
     hideLoadingSpinner();
   }
 }
-
 // دالة اختيار منتج
 function selectProduct(productName) {
   currentProduct = productName;
