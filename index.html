@@ -908,6 +908,7 @@ async function handleTransactionSubmit(formId, type) {
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
     try {
+        // تأكيد الحذف باستخدام SweetAlert2
         const result = await Swal.fire({
             title: 'هل أنت متأكد؟',
             text: "لا يمكن التراجع عن هذا الإجراء!",
@@ -916,40 +917,92 @@ async function deleteTransaction(index) {
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
+            cancelButtonText: 'إلغاء',
+            // تحسينات إضافية للواجهة
+            backdrop: `rgba(0,0,0,0.4)`,
+            allowOutsideClick: false,
+            showLoaderOnConfirm: true
         });
 
         if (result.isConfirmed) {
             showLoadingSpinner();
             const transaction = transactions[index];
             
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
-            } else {
-                totalOutputAmount -= transaction.amount;
-            }
-
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
+            // إرسال طلب الحذف إلى Google Apps Script
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ index })
+                body: JSON.stringify({
+                    action: 'delete',
+                    transactionId: transaction.id || index, // استخدام معرف المعاملة إذا كان موجوداً
+                    datetime: transaction.datetime,
+                    type: transaction.type,
+                    amount: transaction.amount
+                })
             });
 
-            if (response.ok) {
+            const result = await response.json();
+
+            if (result.success) {
+                // تحديث المجاميع المحلية
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount -= parseFloat(transaction.amount);
+                } else {
+                    totalOutputAmount -= parseFloat(transaction.amount);
+                }
+
+                // إزالة المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
+
+                // تحديث واجهة المستخدم
                 await updateUI();
+
+                // إظهار رسالة نجاح
                 showNotification('تم حذف المعاملة بنجاح', 'success');
+                
+                // تحديث هامش الربح
+                updateProfitMargin();
+            } else {
+                throw new Error(result.error || 'فشل في حذف المعاملة');
             }
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
+        showNotification('حدث خطأ في حذف المعاملة: ' + error.message, 'error');
     } finally {
         hideLoadingSpinner();
     }
 }
+
+// دالة مساعدة لتحديث هامش الربح
+function updateProfitMargin() {
+    const profitMargin = calculateProfitMargin();
+    const profitMarginElement = document.getElementById('profitMargin');
+    
+    if (profitMarginElement) {
+        const profitIcon = profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+        const profitClass = profitMargin >= 0 ? 'profit' : 'loss';
+        
+        profitMarginElement.innerHTML = `
+            <i class="fas ${profitIcon}"></i>
+            ${profitMargin.toFixed(2)}%
+        `;
+        profitMarginElement.className = profitClass;
+    }
+}
+
+
+
+// دالة مساعدة للتحقق من صحة الاستجابة
+function validateResponse(response) {
+    if (!response.ok) {
+        throw new Error(`فشل في الاتصال بالخادم: ${response.status}`);
+    }
+    return response.json();
+}
+    
 
   
 function updateSystemDate() {
@@ -985,7 +1038,7 @@ function calculateProfitMargin() {
         ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
 }
 
-// دوال التنبيهات والـ Loading
+// تحسين دالة عرض الإشعارات
 function showNotification(message, type) {
     Swal.fire({
         toast: true,
@@ -994,7 +1047,11 @@ function showNotification(message, type) {
         title: message,
         showConfirmButton: false,
         timer: 3000,
-        timerProgressBar: true
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
     });
 }
 
