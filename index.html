@@ -803,26 +803,19 @@ async function handleTransactionSubmit(formId, type) {
         showLoadingSpinner();
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(transaction)
         });
 
         if (response.ok) {
-            const result = await response.json();
-            if (result.status === 'success') {
-                // تحديث المصفوفة المحلية بالبيانات الجديدة من السيرفر
-                transactions = result.data.slice(1); // نتجاهل صف العناوين
-                
-                // تحديث المجاميع
-                updateTotals();
-                updateUI();
-                form.reset();
-                showNotification('تمت إضافة المعاملة بنجاح', 'success');
+            if (type === 'إدخال للعمل') {
+                totalInputAmount += amount;
             } else {
-                throw new Error(result.error || 'حدث خطأ في حفظ المعاملة');
+                totalOutputAmount += amount;
             }
+            transactions.push(transaction);
+            updateUI();
+            form.reset();
+            showNotification('تمت إضافة المعاملة بنجاح', 'success');
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
@@ -831,9 +824,9 @@ async function handleTransactionSubmit(formId, type) {
         hideLoadingSpinner();
     }
 }
-
+    
 // دالة حذف معاملة مع تأكيد
-async function deleteTransaction(transactionId) {
+async function deleteTransaction(index) {
     try {
         const result = await Swal.fire({
             title: 'هل أنت متأكد؟',
@@ -848,31 +841,26 @@ async function deleteTransaction(transactionId) {
 
         if (result.isConfirmed) {
             showLoadingSpinner();
+            const transaction = transactions[index];
+            
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount -= transaction.amount;
+            } else {
+                totalOutputAmount -= transaction.amount;
+            }
 
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
+            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
+                method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    action: 'delete',
-                    transactionId: transactionId
-                })
+                body: JSON.stringify({ index })
             });
 
             if (response.ok) {
-                const result = await response.json();
-                if (result.status === 'success') {
-                    // تحديث المصفوفة المحلية بالبيانات الجديدة من السيرفر
-                    transactions = result.data.slice(1); // نتجاهل صف العناوين
-                    
-                    // تحديث المجاميع
-                    updateTotals();
-                    await updateUI();
-                    showNotification('تم حذف المعاملة بنجاح', 'success');
-                } else {
-                    throw new Error(result.error || 'حدث خطأ في حذف المعاملة');
-                }
+                transactions.splice(index, 1);
+                await updateUI();
+                showNotification('تم حذف المعاملة بنجاح', 'success');
             }
         }
     } catch (error) {
@@ -882,8 +870,8 @@ async function deleteTransaction(transactionId) {
         hideLoadingSpinner();
     }
 }
-   
-    async function initializeApp() {
+
+       async function initializeApp() {
     try {
         await loadTransactions();
         updateSystemDate();
@@ -893,8 +881,8 @@ async function deleteTransaction(transactionId) {
         showNotification('حدث خطأ في تهيئة التطبيق', 'error');
     }
 }
-
-function updateSystemDate() {
+    
+    function updateSystemDate() {
     const systemDate = document.getElementById('systemDate');
     systemDate.textContent = formatDate(new Date());
 }
