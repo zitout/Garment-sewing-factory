@@ -617,7 +617,7 @@ let totalOutputAmount = 0;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzc7iUZAoOpJIhM2kUNT0u6HPXj2wRgQkqz72E6HZ31UyMhCpiRgAFw0if404Gev3tO/exec';
 
 
-// دالة تحميل البيانات من Google Sheets
+// دالة تحميل البيانات المبسطة
 async function loadTransactions() {
     try {
         const response = await fetch(SCRIPT_URL);
@@ -627,29 +627,31 @@ async function loadTransactions() {
         totalInputAmount = 0;
         totalOutputAmount = 0;
 
-        
-        console.log("البيانات المستلمة:", data); // للتأكد من استلام البيانات
-
-        // تجاهل الصف الأول (العناوين) وتحويل البيانات
+        // تحويل البيانات بنفس طريقة الكود الأصلي
         data.slice(1).forEach(row => {
             const transaction = {
                 datetime: row[0],
                 type: row[1],
-                amount: parseFloat(row[2]),
-                notes: row[3]
+                amount: parseFloat(row[2]) || 0,
+                notes: row[3] || ''
             };
-            
             transactions.push(transaction);
+            
             if (transaction.type === 'إدخال للعمل') {
                 totalInputAmount += transaction.amount;
             } else {
                 totalOutputAmount += transaction.amount;
             }
         });
-        
+
         updateUI();
     } catch (error) {
         console.error("خطأ في تحميل البيانات:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'خطأ في تحميل البيانات',
+            text: 'تأكد من اتصالك بالإنترنت وصلاحيات الوصول'
+        });
     }
 }
 
@@ -777,25 +779,25 @@ async function handleTransactionSubmit(formId, type) {
     const amount = parseFloat(form.querySelector('[type="number"]').value);
     const notes = form.querySelector('[type="text"]').value;
 
-    if (!amount || amount <= 0) {
-        showNotification('الرجاء إدخال مبلغ صحيح', 'warning');
-        return;
-    }
+    const transaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: type,
+        amount: amount,
+        notes: notes
+    };
 
     try {
         showLoadingSpinner();
-        const transaction = {
-            datetime: new Date().toISOString(),
-            type: type,
-            amount: amount,
-            notes: notes
-        };
-
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify(transaction)
         });
 
@@ -805,9 +807,8 @@ async function handleTransactionSubmit(formId, type) {
             } else {
                 totalOutputAmount += amount;
             }
-
-            transactions.unshift(transaction);
-            await updateUI();
+            transactions.push(transaction);
+            updateUI();
             form.reset();
             showNotification('تمت إضافة المعاملة بنجاح', 'success');
         }
@@ -818,7 +819,7 @@ async function handleTransactionSubmit(formId, type) {
         hideLoadingSpinner();
     }
 }
-
+    
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
     try {
