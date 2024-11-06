@@ -614,7 +614,7 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5OtK4o_d5IHfIAQdleUgpcwv6gwSFJr6rE3qgolhp5B7tr9iFLMwL8nVwAlYoUhA6/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzOrItwdESLEAEzHW_XhUTBRNNHM7UcLr--fuUm7aX2vqItlQ4ucaxpSSGx9RtONjj9/exec';
 
 
 // دالة تحميل البيانات من Google Sheets
@@ -908,7 +908,6 @@ async function handleTransactionSubmit(formId, type) {
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
     try {
-        // تأكيد الحذف باستخدام SweetAlert2
         const result = await Swal.fire({
             title: 'هل أنت متأكد؟',
             text: "لا يمكن التراجع عن هذا الإجراء!",
@@ -917,18 +916,13 @@ async function deleteTransaction(index) {
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء',
-            // تحسينات إضافية للواجهة
-            backdrop: `rgba(0,0,0,0.4)`,
-            allowOutsideClick: false,
-            showLoaderOnConfirm: true
+            cancelButtonText: 'إلغاء'
         });
 
         if (result.isConfirmed) {
             showLoadingSpinner();
             const transaction = transactions[index];
             
-            // إرسال طلب الحذف إلى Google Apps Script
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: {
@@ -936,36 +930,31 @@ async function deleteTransaction(index) {
                 },
                 body: JSON.stringify({
                     action: 'delete',
-                    transactionId: transaction.id || index, // استخدام معرف المعاملة إذا كان موجوداً
                     datetime: transaction.datetime,
                     type: transaction.type,
                     amount: transaction.amount
                 })
             });
 
-            const result = await response.json();
+            const responseData = await response.json();
 
-            if (result.success) {
+            if (responseData.success) {
                 // تحديث المجاميع المحلية
                 if (transaction.type === 'إدخال للعمل') {
-                    totalInputAmount -= parseFloat(transaction.amount);
+                    totalInputAmount -= transaction.amount;
                 } else {
-                    totalOutputAmount -= parseFloat(transaction.amount);
+                    totalOutputAmount -= transaction.amount;
                 }
 
-                // إزالة المعاملة من المصفوفة المحلية
+                // حذف المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
-
+                
                 // تحديث واجهة المستخدم
                 await updateUI();
-
-                // إظهار رسالة نجاح
-                showNotification('تم حذف المعاملة بنجاح', 'success');
                 
-                // تحديث هامش الربح
-                updateProfitMargin();
+                showNotification('تم حذف المعاملة بنجاح', 'success');
             } else {
-                throw new Error(result.error || 'فشل في حذف المعاملة');
+                throw new Error(responseData.error || 'فشل في حذف المعاملة');
             }
         }
     } catch (error) {
@@ -976,6 +965,7 @@ async function deleteTransaction(index) {
     }
 }
 
+    
 // دالة مساعدة لتحديث هامش الربح
 function updateProfitMargin() {
     const profitMargin = calculateProfitMargin();
