@@ -1141,50 +1141,123 @@ function addTransactionRow(transaction, index) {
 }
     
 // دالة معالجة إضافة معاملة جديدة
+// دالة معالجة إضافة معاملة جديدة
 async function handleTransactionSubmit(formId, type) {
-    const form = document.getElementById(formId);
-    const amount = parseFloat(form.querySelector('[type="number"]').value);
-    const notes = form.querySelector('[type="text"]').value;
+  if (!currentProduct) {
+    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    return;
+  }
 
-    const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
-        type: type,
-        amount: amount,
-        notes: notes
-    };
+  const form = document.getElementById(formId);
+  const amount = parseFloat(form.querySelector('[type="number"]').value);
+  const notes = form.querySelector('[type="text"]').value;
 
-    try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(transaction)
-        });
+  const transaction = {
+    datetime: new Date().toLocaleString('ar-DZ', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }),
+    type: type,
+    amount: amount,
+    notes: notes,
+    product: currentProduct // إضافة اسم المنتج للمعاملة
+  };
 
-        if (response.ok) {
-            if (type === 'إدخال للعمل') {
-                totalInputAmount += amount;
-            } else {
-                totalOutputAmount += amount;
-            }
-            transactions.push(transaction);
-            updateUI();
-            form.reset();
-            showNotification('تمت إضافة المعاملة بنجاح', 'success');
-        }
-    } catch (error) {
-        console.error("خطأ في حفظ المعاملة:", error);
-        showNotification('حدث خطأ في حفظ المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...transaction,
+        product: currentProduct // تأكيد إرسال اسم المنتج
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      if (type === 'إدخال للعمل') {
+        totalInputAmount += amount;
+      } else {
+        totalOutputAmount += amount;
+      }
+      
+      // إعادة تحميل البيانات من الصفحة المحددة
+      await loadTransactions();
+      
+      form.reset();
+      showNotification('تمت إضافة المعاملة بنجاح', 'success');
+    } else {
+      throw new Error(result.data.error || 'فشل في حفظ المعاملة');
     }
+  } catch (error) {
+    console.error("خطأ في حفظ المعاملة:", error);
+    showNotification(error.message || 'حدث خطأ في حفظ المعاملة', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+// تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
+async function loadTransactions() {
+  if (!currentProduct) return;
+  
+  try {
+    showLoadingSpinner();
+    const response = await fetch(`${SCRIPT_URL}?product=${currentProduct}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      handleTransactionsData(result.data);
+    } else {
+      throw new Error(result.data.error || 'فشل في تحميل البيانات');
+    }
+  } catch (error) {
+    console.error("خطأ في تحميل البيانات:", error);
+    showNotification('حدث خطأ في تحميل البيانات', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+// دالة معالجة البيانات المستلمة
+function handleTransactionsData(data) {
+  transactions = [];
+  totalInputAmount = 0;
+  totalOutputAmount = 0;
+
+  // تجاهل الصف الأول (العناوين) وتحويل البيانات
+  data.slice(1).forEach(row => {
+    if (row.length >= 6) {
+      const transaction = {
+        datetime: row[0],
+        type: row[1],
+        amount: parseFloat(row[2]) || 0,
+        notes: row[3] || '',
+        profitMargin: row[4] || '0%',
+        id: row[5]
+      };
+      
+      transactions.push(transaction);
+
+      // تحديث المجاميع
+      if (transaction.type === 'إدخال للعمل') {
+        totalInputAmount += transaction.amount;
+      } else {
+        totalOutputAmount += transaction.amount;
+      }
+    }
+  });
+
+  updateUI();
 }
     
 // دالة حذف معاملة مع تأكيد
