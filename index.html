@@ -1142,6 +1142,7 @@ function addTransactionRow(transaction, index) {
     
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
+// دالة معالجة إضافة معاملة جديدة
 async function handleTransactionSubmit(formId, type) {
   if (!currentProduct) {
     showNotification('الرجاء اختيار منتج أولاً', 'error');
@@ -1157,7 +1158,7 @@ async function handleTransactionSubmit(formId, type) {
     type: type,
     amount: amount,
     notes: notes,
-    product: currentProduct // مهم: إضافة اسم المنتج
+    product: currentProduct // إضافة اسم المنتج للمعاملة
   };
 
   try {
@@ -1176,7 +1177,7 @@ async function handleTransactionSubmit(formId, type) {
     const result = await response.json();
     
     if (result.success) {
-      await loadTransactions(); // إعادة تحميل البيانات
+      await loadTransactions(); // إعادة تحميل البيانات من الصفحة المحددة
       form.reset();
       showNotification('تمت إضافة المعاملة بنجاح', 'success');
     } else {
@@ -1190,7 +1191,7 @@ async function handleTransactionSubmit(formId, type) {
   }
 }
 
-// تحديث دالة loadTransactions لتحميل البيانات حسب المنتج المحدد
+// تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
 async function loadTransactions() {
   if (!currentProduct) return;
   
@@ -1212,6 +1213,9 @@ async function loadTransactions() {
   }
 }
 
+
+ 
+    
 // دالة للتأكد من اتصال الخادم
 async function checkServerConnection() {
   try {
@@ -1239,6 +1243,7 @@ window.addEventListener('load', async () => {
 });
     
 // دالة معالجة البيانات المستلمة
+   // دالة معالجة البيانات المستلمة
 function handleTransactionsData(data) {
   transactions = [];
   totalInputAmount = 0;
@@ -1268,6 +1273,22 @@ function handleTransactionsData(data) {
   });
 
   updateUI();
+}
+
+// دالة اختيار المنتج
+function selectProduct(productName) {
+  currentProduct = productName;
+  document.getElementById('productSelectionOverlay').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  
+  // تحديث عنوان الصفحة ليظهر اسم المنتج المحدد
+  document.querySelector('.main-header h1').innerHTML = `
+    <i class="fas fa-box"></i>
+    <span>${productName} - نظام إدارة أموال العمل</span>
+  `;
+  
+  // تحميل بيانات المنتج المحدد
+  loadTransactions();
 }
     
 // دالة حذف معاملة مع تأكيد
