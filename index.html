@@ -828,88 +828,58 @@ async function handleTransactionSubmit(formId, type) {
 // دالة حذف معاملة مع تأكيد
 async function deleteTransaction(index) {
     try {
-        // تأكيد الحذف باستخدام SweetAlert2
         const result = await Swal.fire({
             title: 'تأكيد الحذف',
-            text: "هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع عن هذا الإجراء!",
+            text: "هل أنت متأكد من حذف هذه المعاملة؟",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء',
-            showLoaderOnConfirm: true,
-            preConfirm: async () => {
-                showLoadingSpinner();
-                try {
-                    // إرسال طلب الحذف إلى Google Apps Script
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            action: 'delete',
-                            index: index
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('فشل في حذف المعاملة');
-                    }
-
-                    const responseData = await response.json();
-                    if (responseData.status !== 'success') {
-                        throw new Error(responseData.error || 'فشل في حذف المعاملة');
-                    }
-
-                    return responseData;
-                } catch (error) {
-                    Swal.showValidationMessage(`فشل في الحذف: ${error.message}`);
-                } finally {
-                    hideLoadingSpinner();
-                }
-            },
-            allowOutsideClick: () => !Swal.isLoading()
+            cancelButtonText: 'إلغاء'
         });
 
         if (result.isConfirmed) {
-            // تحديث المصفوفة المحلية وإعادة حساب المجاميع
-            const deletedTransaction = transactions[index];
-            if (deletedTransaction.type === 'إدخال للعمل') {
-                totalInputAmount -= parseFloat(deletedTransaction.amount);
-            } else {
-                totalOutputAmount -= parseFloat(deletedTransaction.amount);
-            }
-
-            // حذف المعاملة من المصفوفة المحلية
-            transactions.splice(index, 1);
-
-            // تحديث واجهة المستخدم
-            await updateUI();
-
-            // عرض رسالة نجاح
-            Swal.fire({
-                title: 'تم الحذف!',
-                text: 'تم حذف المعاملة بنجاح',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
+            showLoadingSpinner();
+            
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'delete',
+                    index: index
+                })
             });
 
-            // تحديث الإحصائيات
-            updateStatistics();
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const transaction = transactions[index];
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount -= transaction.amount;
+                } else {
+                    totalOutputAmount -= transaction.amount;
+                }
+                
+                transactions.splice(index, 1);
+                await updateUI();
+                showNotification('تم حذف المعاملة بنجاح', 'success');
+            } else {
+                throw new Error(data.error || 'فشل في حذف المعاملة');
+            }
         }
     } catch (error) {
         console.error("خطأ في حذف المعاملة:", error);
-        Swal.fire({
-            title: 'خطأ!',
-            text: 'حدث خطأ أثناء حذف المعاملة',
-            icon: 'error',
-            confirmButtonText: 'حسناً'
-        });
+        showNotification('حدث خطأ في حذف المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
     }
 }
+
+
+    
 
     async function initializeApp() {
     try {
