@@ -2,130 +2,122 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- تحسين viewport للأجهزة المحمولة -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="نظام إدارة أموال العمل - تتبع المدخلات والمخرجات المالية">
     <meta name="theme-color" content="#2196f3">
     
     <title>نظام إدارة أموال العمل</title>
     
-    <!-- إضافة الخطوط -->
+    <!-- تحسين تحميل الخطوط باستخدام display=swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- إضافة Font Awesome للأيقونات -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- تحميل Font Awesome بشكل أسرع -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+          integrity="sha512-..." 
+          crossorigin="anonymous">
     
-    <!-- إضافة SweetAlert2 للتنبيهات الجميلة -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- تحسين تحميل SweetAlert2 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- إضافة Animate.css للتأثيرات الحركية -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- تحميل Animate.css عند الحاجة فقط -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+          media="print" onload="this.media='all'">
     
-    <!-- PWA Meta Tags -->
+    <!-- تحسينات PWA -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     
-    <!-- SEO Meta Tags -->
-    <meta name="keywords" content="نظام إدارة أموال, محاسبة, تتبع المال, إدارة مالية">
+    <!-- تحسينات SEO -->
+    <meta name="keywords" content="نظام إدارة أموال, محاسبة, تتبع المال, إدارة مالية, تطبيق محاسبة">
     <meta name="author" content="Your Name">
+    <meta name="robots" content="index, follow">
     
-    <!-- Open Graph Meta Tags -->
+    <!-- تحسينات Open Graph -->
     <meta property="og:title" content="نظام إدارة أموال العمل">
     <meta property="og:description" content="نظام متكامل لإدارة وتتبع الأموال">
     <meta property="og:type" content="website">
+    <meta property="og:image" content="og-image.jpg">
+    <meta property="og:url" content="https://your-website.com">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="favicon.png">
-</head>
+    <!-- تحسين Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     
-  
-   <style>
+   
+    <style>
+      /* الإعدادات الأساسية */
 * {
     box-sizing: border-box;
     font-family: 'Cairo', sans-serif;
     margin: 0;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
-    padding: 20px;
+    padding: 10px;
     background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
     min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.5;
+    color: #333;
 }
 
-/* تحسينات نافذة تسجيل الدخول */
+/* نافذة تسجيل الدخول */
 .login-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
-        .loading-spinner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid #2196f3;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-        
-
 .login-box {
     background: white;
-    padding: 40px;
-    border-radius: 20px;
+    padding: 25px;
+    border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     width: 90%;
-    max-width: 400px;
+    max-width: 350px;
     text-align: center;
     animation: fadeIn 0.5s ease;
 }
 
 .login-box h2 {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     color: #2c3e50;
-    font-size: 28px;
+    font-size: 24px;
+    font-weight: 700;
 }
 
 .login-box input {
     width: 100%;
-    padding: 15px;
-    margin: 15px 0;
+    padding: 12px;
+    margin: 10px 0;
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 16px;
     text-align: center;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .login-box input:focus {
@@ -137,13 +129,13 @@ body {
 .login-box button {
     background: #2196f3;
     color: white;
-    padding: 15px 40px;
+    padding: 12px 30px;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    margin-top: 20px;
+    margin-top: 15px;
     transition: all 0.3s ease;
 }
 
@@ -153,41 +145,53 @@ body {
     box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
 }
 
-.error-message {
-    color: #f44336;
-    margin-top: 15px;
+/* Loading Spinner */
+.loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
     display: none;
-    animation: shake 0.5s ease;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
 }
 
-/* تحسينات المحتوى الرئيسي */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196f3;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* المحتوى الرئيسي */
 .container {
-    max-width: 1200px;
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 10px auto;
     background: white;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     display: none;
     animation: slideUp 0.5s ease;
 }
 
+/* نماذج الإدخال */
 .forms-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
 }
 
 .form-section {
-    padding: 25px;
-    border-radius: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    transition: transform 0.3s ease;
 }
 
 .input-section {
@@ -199,23 +203,23 @@ body {
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-weight: 600;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 15px;
     transition: all 0.3s ease;
 }
 
@@ -225,19 +229,98 @@ body {
     box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
-.btn {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 16px;
-    transition: all 0.3s ease;
+        /* الإحصائيات */
+.statistics {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 20px;
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+.stat-card {
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card h3 {
+    color: #2c3e50;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.stat-card p {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2196f3;
+}
+
+/* جدول المعاملات */
+.transactions-table {
+    width: 100%;
+    margin-top: 20px;
+    overflow-x: auto;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.transactions-table::-webkit-scrollbar {
+    height: 6px;
+}
+
+.transactions-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.transactions-table::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.transactions-table table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 15px;
+}
+
+.transactions-table th {
+    background: #2196f3;
+    color: white;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.transactions-table td {
+    padding: 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.transactions-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* الأزرار */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .btn-input {
@@ -245,8 +328,10 @@ body {
     color: white;
 }
 
-.btn-input:hover {
+.btn-input:hover, .btn-input:focus {
     background: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
 }
 
 .btn-output {
@@ -254,88 +339,22 @@ body {
     color: white;
 }
 
-.btn-output:hover {
+.btn-output:hover, .btn-output:focus {
     background: #388e3c;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
 }
 
-/* تحسينات الإحصائيات */
-.statistics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 25px;
-    margin-top: 30px;
-}
-
-.stat-card {
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    background: white;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.stat-card h3 {
-    color: #2c3e50;
-    margin-bottom: 10px;
-    font-size: 18px;
-}
-
-.stat-card p {
-    font-size: 24px;
-    font-weight: 600;
-}
-
-/* تحسينات الجدول */
-.transactions-table {
-    width: 100%;
-    margin-top: 30px;
-    border-collapse: separate;
-    border-spacing: 0;
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.transactions-table th {
-    background: #2196f3;
-    color: white;
-    padding: 15px;
-    font-weight: 600;
-    text-align: right;
-}
-
-.transactions-table td {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.transactions-table tr:hover {
-    background: #f5f5f5;
-}
-
-.transactions-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* تحسينات الأزرار */
 .action-btn {
-    padding: 8px 16px;
-    margin: 3px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    padding: 6px 12px;
+    font-size: 13px;
+    margin: 2px;
+    border-radius: 6px;
 }
 
 .edit-btn {
     background: #ff9800;
+    color: white;
 }
 
 .edit-btn:hover {
@@ -344,17 +363,40 @@ body {
 
 .delete-btn {
     background: #f44336;
+    color: white;
 }
 
 .delete-btn:hover {
     background: #d32f2f;
 }
 
-        .transaction-type-badge {
-    padding: 5px 10px;
-    border-radius: 15px;
+/* زر تسجيل الخروج */
+.logout-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    padding: 8px 16px;
+    background: #f44336;
+    color: white;
     font-size: 14px;
+    border-radius: 8px;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.logout-btn:hover {
+    background: #d32f2f;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
+}
+
+/* شارات نوع المعاملة */
+.transaction-type-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .input-badge {
@@ -369,57 +411,119 @@ body {
     border: 2px solid #388e3c;
 }
 
-        .logout-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    padding: 10px 20px;
-    background: #f44336;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    z-index: 100;
-}
-
-.logout-btn:hover {
-    background: #d32f2f;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
-}
-        
-
-/* تأثيرات حركية */
+/* التأثيرات الحركية */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from { 
+        opacity: 0; 
+    }
+    to { 
+        opacity: 1; 
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from { 
+        transform: translateY(15px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
+@keyframes spin {
+    0% { 
+        transform: rotate(0deg); 
+    }
+    100% { 
+        transform: rotate(360deg); 
+    }
 }
 
-/* تحسينات التجاوب */
-@media (max-width: 768px) {
-    .forms-container {
-        grid-template-columns: 1fr;
+/* التجاوب مع الشاشات */
+@media (min-width: 768px) {
+    body {
+        padding: 20px;
     }
-    
-    .statistics {
-        grid-template-columns: 1fr;
-    }
-    
+
     .container {
+        padding: 30px;
+        margin: 20px auto;
+        max-width: 1200px;
+    }
+
+    .forms-container {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+
+    .statistics {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .login-box {
+        padding: 40px;
+    }
+
+    .form-section:hover {
+        transform: translateY(-5px);
+    }
+}
+
+/* تحسينات للشاشات الصغيرة جداً */
+@media (max-width: 360px) {
+    body {
+        padding: 5px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .form-section {
         padding: 15px;
+    }
+
+    .login-box {
+        padding: 20px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .transactions-table th,
+    .transactions-table td {
+        padding: 8px;
+        font-size: 13px;
+    }
+}
+
+/* دعم الوضع المظلم للنظام */
+@media (prefers-color-scheme: dark) {
+    .login-box,
+    .container,
+    .stat-card {
+        background: #1f1f1f;
+        color: #fff;
+    }
+
+    .form-section {
+        background: #2d2d2d;
+    }
+
+    .transactions-table td {
+        border-bottom-color: #333;
+    }
+
+    .transactions-table tr:hover {
+        background-color: #2d2d2d;
     }
 }
 </style>
