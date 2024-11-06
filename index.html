@@ -825,7 +825,7 @@ async function handleTransactionSubmit(formId, type) {
     }
 }
     
-// دالة حذف معاملة مع تأكيد
+// دالة حذف معاملة
 async function deleteTransaction(index) {
     try {
         const result = await Swal.fire({
@@ -841,26 +841,33 @@ async function deleteTransaction(index) {
 
         if (result.isConfirmed) {
             showLoadingSpinner();
-            const transaction = transactions[index];
             
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
-            } else {
-                totalOutputAmount -= transaction.amount;
-            }
-
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ index })
+                body: JSON.stringify({
+                    action: 'delete',
+                    index: index
+                })
             });
 
-            if (response.ok) {
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                const transaction = transactions[index];
+                if (transaction.type === 'إدخال للعمل') {
+                    totalInputAmount -= transaction.amount;
+                } else {
+                    totalOutputAmount -= transaction.amount;
+                }
+                
                 transactions.splice(index, 1);
-                await updateUI();
+                updateUI();
                 showNotification('تم حذف المعاملة بنجاح', 'success');
+            } else {
+                throw new Error(result.error);
             }
         }
     } catch (error) {
@@ -870,6 +877,50 @@ async function deleteTransaction(index) {
         hideLoadingSpinner();
     }
 }
+
+// دالة تعديل معاملة
+async function editTransaction(index, updatedData) {
+    try {
+        showLoadingSpinner();
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'edit',
+                index: index,
+                transaction: updatedData
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            // تحديث المبالغ الإجمالية
+            const oldTransaction = transactions[index];
+            if (oldTransaction.type === 'إدخال للعمل') {
+                totalInputAmount = totalInputAmount - oldTransaction.amount + updatedData.amount;
+            } else {
+                totalOutputAmount = totalOutputAmount - oldTransaction.amount + updatedData.amount;
+            }
+            
+            // تحديث المعاملة في المصفوفة
+            transactions[index] = updatedData;
+            updateUI();
+            showNotification('تم تعديل المعاملة بنجاح', 'success');
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error("خطأ في تعديل المعاملة:", error);
+        showNotification('حدث خطأ في تعديل المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+    
 
     async function initializeApp() {
     try {
@@ -886,6 +937,32 @@ function updateSystemDate() {
     const systemDate = document.getElementById('systemDate');
     systemDate.textContent = formatDate(new Date());
 }
+
+    // دالة معالجة نموذج التعديل
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const index = parseInt(document.getElementById('editIndex').value);
+    const amount = parseFloat(document.getElementById('editAmount').value);
+    const notes = document.getElementById('editNotes').value;
+    
+    const updatedTransaction = {
+        datetime: new Date().toLocaleString('ar-DZ', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }),
+        type: transactions[index].type, // نحتفظ بنفس النوع
+        amount: amount,
+        notes: notes
+    };
+    
+    await editTransaction(index, updatedTransaction);
+    closeEditModal();
+});
     
 
 // دوال مساعدة
