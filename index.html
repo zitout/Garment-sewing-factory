@@ -618,7 +618,7 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyYBO5vtLJGoS0srlEoU
 
 
 // دالة تحميل البيانات المبسطة
-// دالة تحميل البيانات من Google Sheets
+
 async function loadTransactions() {
     try {
         const response = await fetch(SCRIPT_URL);
@@ -653,7 +653,8 @@ async function loadTransactions() {
         console.error("خطأ في تحميل البيانات:", error);
     }
 }
-    
+
+   
     
 // تبسيط دالة checkPassword
 function checkPassword(event) {
