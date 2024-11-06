@@ -390,53 +390,7 @@ body {
     box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
 }
         
-.edit-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
 
-.edit-box {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.save-btn, .cancel-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.save-btn {
-    background: #4caf50;
-    color: white;
-}
-
-.cancel-btn {
-    background: #f44336;
-    color: white;
-}
-        
 /* تأثيرات حركية */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -871,7 +825,6 @@ async function handleTransactionSubmit(formId, type) {
     }
 }
     
-// دالة حذف معاملة
 async function deleteTransaction(index) {
     try {
         const result = await Swal.fire({
@@ -899,9 +852,10 @@ async function deleteTransaction(index) {
                 })
             });
 
-            const data = await response.json();
-            
-            if (data.status === 'success') {
+            const responseData = await response.json();
+
+            if (responseData.status === 'success') {
+                // تحديث البيانات المحلية
                 const transaction = transactions[index];
                 if (transaction.type === 'إدخال للعمل') {
                     totalInputAmount -= transaction.amount;
@@ -909,11 +863,12 @@ async function deleteTransaction(index) {
                     totalOutputAmount -= transaction.amount;
                 }
                 
+                // حذف المعاملة من المصفوفة المحلية
                 transactions.splice(index, 1);
+                
+                // تحديث واجهة المستخدم
                 updateUI();
                 showNotification('تم حذف المعاملة بنجاح', 'success');
-            } else {
-                throw new Error(data.error || 'حدث خطأ في عملية الحذف');
             }
         }
     } catch (error) {
@@ -923,114 +878,14 @@ async function deleteTransaction(index) {
         hideLoadingSpinner();
     }
 }
-
-// دالة فتح نافذة التعديل
-function openEditModal(index) {
-    const transaction = transactions[index];
-    document.getElementById('editIndex').value = index;
-    document.getElementById('editAmount').value = transaction.amount;
-    document.getElementById('editNotes').value = transaction.notes || '';
-    document.getElementById('editModal').style.display = 'flex';
-}
-
-// دالة إغلاق نافذة التعديل
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-
-// دالة تعديل معاملة
-async function editTransaction(index, updatedData) {
-    try {
-        showLoadingSpinner();
-        
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'edit',
-                index: index,
-                transaction: updatedData
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            const oldTransaction = transactions[index];
-            if (oldTransaction.type === 'إدخال للعمل') {
-                totalInputAmount = totalInputAmount - oldTransaction.amount + updatedData.amount;
-            } else {
-                totalOutputAmount = totalOutputAmount - oldTransaction.amount + updatedData.amount;
-            }
-            
-            transactions[index] = updatedData;
-            updateUI();
-            closeEditModal();
-            showNotification('تم تعديل المعاملة بنجاح', 'success');
-        } else {
-            throw new Error(data.error || 'حدث خطأ في عملية التعديل');
-        }
-    } catch (error) {
-        console.error("خطأ في تعديل المعاملة:", error);
-        showNotification('حدث خطأ في تعديل المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
-
-// إضافة مستمع الحدث لنموذج التعديل
-document.getElementById('editForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const index = parseInt(document.getElementById('editIndex').value);
-    const amount = parseFloat(document.getElementById('editAmount').value);
-    const notes = document.getElementById('editNotes').value;
-    
-    const updatedTransaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
-        type: transactions[index].type,
-        amount: amount,
-        notes: notes
-    };
-    
-    await editTransaction(index, updatedTransaction);
-});
     
     
-
-    async function initializeApp() {
-    try {
-        await loadTransactions();
-        updateSystemDate();
-        setInterval(updateSystemDate, 60000); // تحديث كل دقيقة
-    } catch (error) {
-        console.error("خطأ في تهيئة التطبيق:", error);
-        showNotification('حدث خطأ في تهيئة التطبيق', 'error');
-    }
-}
 
 function updateSystemDate() {
     const systemDate = document.getElementById('systemDate');
     systemDate.textContent = formatDate(new Date());
 }
-
-    // دالة معالجة نموذج التعديل
-document.getElementById('editForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const index = parseInt(document.getElementById('editIndex').value);
-    const amount = parseFloat(document.getElementById('editAmount').value);
-    const notes = document.getElementById('editNotes').value;
     
-   
 
 // دوال مساعدة
 function formatDate(dateString) {
