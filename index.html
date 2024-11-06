@@ -758,24 +758,46 @@ async function updateUI() {
 
     
 
-        // دالة إضافة صف جديد للجدول
-        function addTransactionRow(transaction, index) {
-            const tbody = document.getElementById('transactionsBody');
-            const row = document.createElement('tr');
-            const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-            row.innerHTML = `
-                <td>${transaction.datetime}</td>
-                <td>${transaction.type}</td>
-                <td>${transaction.amount.toFixed(2)} دج</td>
-                <td>${transaction.notes}</td>
-                <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">${profitMargin.toFixed(2)}%</td>
-                <td>
-                    <button class="action-btn edit-btn" onclick="openEditModal(${index})">تعديل</button>
-                    <button class="action-btn delete-btn" onclick="deleteTransaction(${index})">حذف</button>
-                </td>
-            `;
-            tbody.insertBefore(row, tbody.firstChild);
-        }
+    // دالة إضافة صف جديد مع تأثيرات حركية
+function addTransactionRow(transaction, index) {
+    const tbody = document.getElementById('transactionsBody');
+    const row = document.createElement('tr');
+    row.classList.add('animate__animated', 'animate__fadeIn');
+    
+    const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
+    row.classList.add(transactionClass);
+    
+    const profitMargin = calculateProfitMargin();
+    
+    row.innerHTML = `
+        <td>${formatDate(transaction.datetime)}</td>
+        <td>
+            <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
+                ${transaction.type}
+            </span>
+        </td>
+        <td>${formatCurrency(transaction.amount)}</td>
+        <td>${transaction.notes || '-'}</td>
+        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
+            <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+            ${profitMargin.toFixed(2)}%
+        </td>
+        <td>
+            <div class="action-buttons">
+                <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" onclick="deleteTransaction(${index})" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    tbody.insertBefore(row, tbody.firstChild);
+}
+
+    
 
         // معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async function(e) {
