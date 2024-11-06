@@ -813,8 +813,7 @@ async function handleTransactionSubmit(formId, type) {
             const result = await response.json();
             if (result.status === 'success') {
                 // تحديث المصفوفة المحلية بالبيانات الجديدة من السيرفر
-                const newData = result.data;
-                transactions = newData.slice(1); // تجاهل صف العناوين
+                transactions = result.data.slice(1); // نتجاهل صف العناوين
                 
                 // تحديث المجاميع
                 updateTotals();
@@ -822,10 +821,8 @@ async function handleTransactionSubmit(formId, type) {
                 form.reset();
                 showNotification('تمت إضافة المعاملة بنجاح', 'success');
             } else {
-                throw new Error(result.error || 'حدث خطأ غير معروف');
+                throw new Error(result.error || 'حدث خطأ في حفظ المعاملة');
             }
-        } else {
-            throw new Error('فشل في الاتصال بالسيرفر');
         }
     } catch (error) {
         console.error("خطأ في حفظ المعاملة:", error);
@@ -867,8 +864,7 @@ async function deleteTransaction(transactionId) {
                 const result = await response.json();
                 if (result.status === 'success') {
                     // تحديث المصفوفة المحلية بالبيانات الجديدة من السيرفر
-                    const newData = result.data;
-                    transactions = newData.slice(1); // تجاهل صف العناوين
+                    transactions = result.data.slice(1); // نتجاهل صف العناوين
                     
                     // تحديث المجاميع
                     updateTotals();
@@ -877,8 +873,6 @@ async function deleteTransaction(transactionId) {
                 } else {
                     throw new Error(result.error || 'حدث خطأ في حذف المعاملة');
                 }
-            } else {
-                throw new Error('فشل في الاتصال بالسيرفر');
             }
         }
     } catch (error) {
@@ -888,53 +882,7 @@ async function deleteTransaction(transactionId) {
         hideLoadingSpinner();
     }
 }
-
-// دالة تحديث المجاميع
-function updateTotals() {
-    totalInputAmount = 0;
-    totalOutputAmount = 0;
-    
-    transactions.forEach(transaction => {
-        const amount = parseFloat(transaction[3]); // الحقل الرابع هو المبلغ
-        if (transaction[2] === 'إدخال للعمل') { // الحقل الثالث هو نوع المعاملة
-            totalInputAmount += amount;
-        } else {
-            totalOutputAmount += amount;
-        }
-    });
-}
-
-// دالة تحديث واجهة المستخدم
-async function updateUI() {
-    // تحديث عرض المعاملات في الجدول
-    const transactionsTableBody = document.querySelector('#transactionsTable tbody');
-    transactionsTableBody.innerHTML = '';
-
-    transactions.forEach((transaction, index) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${transaction[0]}</td> <!-- رقم العملية -->
-            <td>${transaction[1]}</td> <!-- التاريخ -->
-            <td>${transaction[2]}</td> <!-- النوع -->
-            <td>${transaction[3]}</td> <!-- المبلغ -->
-            <td>${transaction[4]}</td> <!-- الملاحظات -->
-            <td>
-                <button onclick="deleteTransaction(${transaction[0]})" class="btn btn-danger btn-sm">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
-        transactionsTableBody.appendChild(row);
-    });
-
-    // تحديث عرض المجاميع
-    document.getElementById('totalInput').textContent = totalInputAmount.toFixed(2);
-    document.getElementById('totalOutput').textContent = totalOutputAmount.toFixed(2);
-    document.getElementById('balance').textContent = (totalInputAmount - totalOutputAmount).toFixed(2);
-}
-
-
-    
+   
     async function initializeApp() {
     try {
         await loadTransactions();
