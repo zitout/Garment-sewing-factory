@@ -803,7 +803,7 @@ body {
     
 // المتغيرات العامة
 let currentProduct = null;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxN3t3m-4il9Fe0XW9ueMLTdOMgvKK01CERVV5XxhSFzjNTpwrgUXAGbEVgqAXV7_5T/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzYFvY7GUm6hPfAW9VyIaFIh4xieFe4qqiQB-SpUZ1m_94vGvWONIlGvagQBUECkpxv/exec';
 
 
     
@@ -860,30 +860,20 @@ document.getElementById('productSelect').addEventListener('change', async functi
     if (selectedValue) {
         try {
             showLoadingSpinner();
-            // طلب تحديد الصفحة وتحميل بياناتها
-            const response = await fetch(`${SCRIPT_URL}?action=selectSheet&productName=${encodeURIComponent(selectedValue)}`);
+            // طلب تحديد الصفحة
+            const selectResponse = await fetch(`${SCRIPT_URL}?action=selectSheet&productName=${encodeURIComponent(selectedValue)}`);
+            const selectResult = await selectResponse.json();
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            if (result.success) {
+            if (selectResult.success) {
                 currentProduct = selectedValue;
                 document.getElementById('newProductForm').style.display = 'none';
                 
                 // تحميل بيانات المنتج
                 await loadTransactions(selectedValue);
                 
-                // تحديث عنوان الصفحة
-                document.querySelector('.main-header h1').innerHTML = `
-                    <i class="fas fa-box"></i>
-                    <span>${selectedValue} - نظام إدارة أموال العمل</span>
-                `;
-                
                 showNotification(`تم تحديد منتج: ${selectedValue}`, 'success');
             } else {
-                throw new Error(result.data?.error || 'فشل في تحديد المنتج');
+                throw new Error(selectResult.error || 'فشل في تحديد المنتج');
             }
         } catch (error) {
             console.error("خطأ:", error);
@@ -895,6 +885,29 @@ document.getElementById('productSelect').addEventListener('change', async functi
     }
 });
 
+// تحديث دالة تحميل المعاملات
+async function loadTransactions(productName) {
+    if (!productName) return;
+
+    try {
+        showLoadingSpinner();
+        const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            handleTransactionsData(result.data);
+            updateUI();
+        } else {
+            throw new Error(result.error || 'فشل في تحميل البيانات');
+        }
+    } catch (error) {
+        console.error("خطأ في تحميل المعاملات:", error);
+        showNotification('حدث خطأ في تحميل المعاملات', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+    
 // إنشاء منتج جديد
 async function createNewProduct() {
     const productName = document.getElementById('newProductName').value.trim();
