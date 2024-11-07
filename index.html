@@ -801,27 +801,21 @@ body {
     
 <script>
 // المتغيرات العامة
-let transactions = [];
-let totalInputAmount = 0;
-let totalOutputAmount = 0;
-    let currentProduct = null;
+let currentProduct = null;
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxN3t3m-4il9Fe0XW9ueMLTdOMgvKK01CERVV5XxhSFzjNTpwrgUXAGbEVgqAXV7_5T/exec';
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6I1ELag69ymB-Xx1pEyWuS3cwaGBf-nzRluahK92RBX8zwg8aXytyEyB4Qef1Je9l/exec';
-
-
-    // دالة تحميل المنتجات في القائمة المنسدلة
+// دالة تحميل المنتجات في القائمة المنسدلة
 async function loadProducts() {
   try {
     const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
     const result = await response.json();
-    
     const select = document.getElementById('productSelect');
-    // الاحتفاظ بالخيارين الأساسيين
+
     select.innerHTML = `
       <option value="">اختر منتج...</option>
       <option value="new">✨ إضافة منتج جديد</option>
     `;
-    
+
     if (result.data.products) {
       result.data.products.forEach(product => {
         const option = document.createElement('option');
@@ -837,7 +831,7 @@ async function loadProducts() {
 }
 
 // معالجة تغيير المنتج المحدد
-document.getElementById('productSelect').addEventListener('change', function(e) {
+document.getElementById('productSelect').addEventListener('change', async function(e) {
   const selectedValue = e.target.value;
   
   if (selectedValue === 'new') {
@@ -846,12 +840,130 @@ document.getElementById('productSelect').addEventListener('change', function(e) 
   }
   
   if (selectedValue) {
-    currentProduct = selectedValue;
-    loadTransactions(selectedValue);
-    document.getElementById('newProductForm').style.display = 'none';
+    try {
+      showLoadingSpinner();
+      // طلب تحديد الصفحة المختارة
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'selectSheet',
+          productName: selectedValue
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        currentProduct = selectedValue;
+        document.getElementById('newProductForm').style.display = 'none';
+        await loadTransactions(selectedValue);
+        showNotification(`تم تحديد منتج: ${selectedValue}`, 'success');
+      } else {
+        throw new Error(result.error || 'فشل في تحديد المنتج');
+      }
+    } catch (error) {
+      console.error("خطأ:", error);
+      showNotification(error.message, 'error');
+    } finally {
+      hideLoadingSpinner();
+    }
   }
 });
 
+// دالة إضافة معاملة جديدة
+async function submitTransaction(formData) {
+  if (!currentProduct) {
+    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    return;
+  }
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'addTransaction',
+        productName: currentProduct,
+        ...formData
+      })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      showNotification('تمت إضافة المعاملة بنجاح', 'success');
+      await loadTransactions(currentProduct);
+      return true;
+    } else {
+      throw new Error(result.error || 'فشل في إضافة المعاملة');
+    }
+  } catch (error) {
+    console.error("خطأ:", error);
+    showNotification(error.message, 'error');
+    return false;
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+// دالة تحميل المعاملات للمنتج المحدد
+async function loadTransactions(productName) {
+  if (!productName) return;
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
+    const result = await response.json();
+
+    if (result.success) {
+      handleTransactionsData(result.data);
+      updateUI();
+    } else {
+      throw new Error(result.error || 'فشل في تحميل البيانات');
+    }
+  } catch (error) {
+    console.error("خطأ في تحميل المعاملات:", error);
+    showNotification('حدث خطأ في تحميل المعاملات', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+// معالجة نماذج الإدخال
+document.getElementById('inputForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = {
+    type: 'إدخال للعمل',
+    amount: parseFloat(document.getElementById('inputAmount').value),
+    notes: document.getElementById('inputNotes').value,
+    datetime: new Date().toLocaleString('ar-DZ')
+  };
+
+  if (await submitTransaction(formData)) {
+    e.target.reset();
+  }
+});
+
+document.getElementById('outputForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = {
+    type: 'عائد من العمل',
+    amount: parseFloat(document.getElementById('outputAmount').value),
+    notes: document.getElementById('outputNotes').value,
+    datetime: new Date().toLocaleString('ar-DZ')
+  };
+
+  if (await submitTransaction(formData)) {
+    e.target.reset();
+  }
+});
+    
 // دالة إنشاء منتج جديد
 async function createNewProduct() {
   const productName = document.getElementById('newProductName').value.trim();
@@ -902,40 +1014,6 @@ function cancelNewProduct() {
 
     
 // دالة تحميل البيانات من Google Sheets
-// تحديث دالة تحميل المعاملات
-async function loadTransactions(productName) {
-  if (!productName) return;
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
-    const result = await response.json();
-    
-    if (result.success) {
-      transactions = result.data.slice(1); // تجاهل صف العناوين
-      totalInputAmount = 0;
-      totalOutputAmount = 0;
-
-      transactions.forEach(transaction => {
-        if (transaction[1] === 'إدخال للعمل') {
-          totalInputAmount += parseFloat(transaction[2]) || 0;
-        } else {
-          totalOutputAmount += parseFloat(transaction[2]) || 0;
-        }
-      });
-
-      updateUI();
-    } else {
-      throw new Error(result.data.error || 'فشل في تحميل البيانات');
-    }
-  } catch (error) {
-    console.error("خطأ في تحميل المعاملات:", error);
-    showNotification('حدث خطأ في تحميل المعاملات', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
-}
-
 
 
 // تحسين دالة updateUI
@@ -1132,28 +1210,6 @@ function addTransactionRow(transaction, index) {
 }
     
 
-async function submitTransaction(transactionData) {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        ...transactionData,
-        productName: currentProduct, // إضافة اسم المنتج
-        action: 'addTransaction'
-      })
-    });
-    const result = await response.json();
-    if (result.success) {
-      showNotification('تمت إضافة المعاملة بنجاح', 'success');
-      loadTransactions(currentProduct);
-    } else {
-      throw new Error(result.error);
-    }
-  } catch (error) {
-    console.error("خطأ:", error);
-    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-  }
-}
 
 
     // دالة للتأكد من اتصال الخادم
