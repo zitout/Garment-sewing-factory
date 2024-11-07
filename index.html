@@ -1143,7 +1143,8 @@ function addTransactionRow(transaction, index) {
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
-async function handleTransactionSubmit(formId, type) {
+// دالة إرسال المعاملة
+async function submitTransaction(formId, type) {
   if (!currentProduct) {
     showNotification('الرجاء اختيار منتج أولاً', 'error');
     return;
@@ -1153,12 +1154,13 @@ async function handleTransactionSubmit(formId, type) {
   const amount = parseFloat(form.querySelector('[type="number"]').value);
   const notes = form.querySelector('[type="text"]').value;
 
-  const transaction = {
+  const transactionData = {
     datetime: new Date().toLocaleString('ar-DZ'),
     type: type,
     amount: amount,
     notes: notes,
-    product: currentProduct // إضافة اسم المنتج للمعاملة
+    productName: currentProduct,
+    action: 'addTransaction'
   };
 
   try {
@@ -1168,46 +1170,72 @@ async function handleTransactionSubmit(formId, type) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...transaction,
-        product: currentProduct
-      })
+      body: JSON.stringify(transactionData)
     });
 
     const result = await response.json();
-    
     if (result.success) {
-      await loadTransactions(); // إعادة تحميل البيانات من الصفحة المحددة
       form.reset();
       showNotification('تمت إضافة المعاملة بنجاح', 'success');
+      await loadTransactions(currentProduct);
     } else {
-      throw new Error(result.data.error || 'فشل في حفظ المعاملة');
+      throw new Error(result.error || 'فشل في حفظ المعاملة');
     }
   } catch (error) {
-    console.error("خطأ في حفظ المعاملة:", error);
-    showNotification(error.message || 'حدث خطأ في حفظ المعاملة', 'error');
+    console.error("خطأ في إضافة المعاملة:", error);
+    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
   } finally {
     hideLoadingSpinner();
   }
 }
 
-// تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
-async function loadTransactions() {
-  if (!currentProduct) return;
+// دالة تحميل المعاملات
+async function loadTransactions(productName) {
+  if (!productName) return;
   
   try {
     showLoadingSpinner();
-    const response = await fetch(`${SCRIPT_URL}?product=${currentProduct}`);
+    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
     const result = await response.json();
     
     if (result.success) {
-      handleTransactionsData(result.data);
+      // تحديث المتغيرات العامة
+      transactions = [];
+      totalInputAmount = 0;
+      totalOutputAmount = 0;
+
+      // معالجة البيانات الواردة
+      if (Array.isArray(result.data) && result.data.length > 1) {
+        // تجاهل الصف الأول (العناوين)
+        result.data.slice(1).forEach(row => {
+          const transaction = {
+            datetime: row[0],
+            type: row[1],
+            amount: parseFloat(row[2]) || 0,
+            notes: row[3] || '',
+            profitMargin: row[4] || '0%',
+            id: row[5]
+          };
+
+          transactions.push(transaction);
+
+          // تحديث المجاميع
+          if (transaction.type === 'إدخال للعمل') {
+            totalInputAmount += transaction.amount;
+          } else {
+            totalOutputAmount += transaction.amount;
+          }
+        });
+      }
+
+      // تحديث واجهة المستخدم
+      updateUI();
     } else {
-      throw new Error(result.data.error || 'فشل في تحميل البيانات');
+      throw new Error(result.error || 'فشل في تحميل البيانات');
     }
   } catch (error) {
-    console.error("خطأ في تحميل البيانات:", error);
-    showNotification('حدث خطأ في تحميل البيانات', 'error');
+    console.error("خطأ في تحميل المعاملات:", error);
+    showNotification('حدث خطأ في تحميل المعاملات', 'error');
   } finally {
     hideLoadingSpinner();
   }
