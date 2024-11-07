@@ -1155,21 +1155,6 @@ async function submitTransaction(transactionData) {
   }
 }
 
-// تحميل معاملات منتج معين
-async function loadTransactions(productName) {
-  try {
-    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
-    const result = await response.json();
-    if (result.success) {
-      // تحديث واجهة المستخدم بالمعاملات
-      updateTransactions(result.data);
-    }
-  } catch (error) {
-    console.error("خطأ في تحميل المعاملات:", error);
-    showNotification('حدث خطأ في تحميل المعاملات', 'error');
-  }
-}
-    
 
     // دالة للتأكد من اتصال الخادم
 async function checkServerConnection() {
@@ -1326,26 +1311,7 @@ function calculateProfitMargin() {
         ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
 }
 
-// دوال التنبيهات والـ Loading
-function showNotification(message, type) {
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: type,
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-}
 
-function showLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
-}
-
-function hideLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'none';
-}
 
 // تعديل Event Listeners
 window.addEventListener('load', () => {
@@ -1355,135 +1321,158 @@ window.addEventListener('load', () => {
 });
 
 
-document.getElementById('inputForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleTransactionSubmit('inputForm', 'إدخال للعمل');
-});
-
-document.getElementById('outputForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleTransactionSubmit('outputForm', 'عائد من العمل');
-});
-
-
-    // تحديث معالجة نموذج الإدخال
+// معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
-    return;
-  }
-
-  const formData = {
-    datetime: new Date().toLocaleString('ar-DZ'),
-    type: 'إدخال للعمل',
-    amount: parseFloat(document.getElementById('inputAmount').value),
-    notes: document.getElementById('inputNotes').value,
-    productName: currentProduct,
-    action: 'addTransaction'
-  };
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      showNotification('تمت إضافة المعاملة بنجاح', 'success');
-      e.target.reset();
-      loadTransactions(currentProduct);
-    } else {
-      throw new Error(result.data.error || 'فشل في إضافة المعاملة');
+    e.preventDefault();
+    if (!currentProduct) {
+        showNotification('الرجاء اختيار منتج أولاً', 'error');
+        return;
     }
-  } catch (error) {
-    console.error("خطأ:", error);
-    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
+
+    const formData = {
+        datetime: new Date().toLocaleString('ar-DZ'),
+        type: 'إدخال للعمل',
+        amount: parseFloat(document.getElementById('inputAmount').value),
+        notes: document.getElementById('inputNotes').value,
+        productName: currentProduct,
+        action: 'addTransaction'
+    };
+
+    try {
+        showLoadingSpinner();
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('تمت إضافة المعاملة بنجاح', 'success');
+            e.target.reset();
+            await loadTransactions(currentProduct);
+        } else {
+            throw new Error(result.data?.error || 'فشل في إضافة المعاملة');
+        }
+    } catch (error) {
+        console.error("خطأ:", error);
+        showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
 });
 
-// تحديث معالجة نموذج الإخراج
+// معالجة نموذج الإخراج
 document.getElementById('outputForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
-    return;
-  }
-
-  const formData = {
-    datetime: new Date().toLocaleString('ar-DZ'),
-    type: 'عائد من العمل',
-    amount: parseFloat(document.getElementById('outputAmount').value),
-    notes: document.getElementById('outputNotes').value,
-    productName: currentProduct,
-    action: 'addTransaction'
-  };
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      showNotification('تمت إضافة المعاملة بنجاح', 'success');
-      e.target.reset();
-      loadTransactions(currentProduct);
-    } else {
-      throw new Error(result.data.error || 'فشل في إضافة المعاملة');
+    e.preventDefault();
+    if (!currentProduct) {
+        showNotification('الرجاء اختيار منتج أولاً', 'error');
+        return;
     }
-  } catch (error) {
-    console.error("خطأ:", error);
-    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
+
+    const formData = {
+        datetime: new Date().toLocaleString('ar-DZ'),
+        type: 'عائد من العمل',
+        amount: parseFloat(document.getElementById('outputAmount').value),
+        notes: document.getElementById('outputNotes').value,
+        productName: currentProduct,
+        action: 'addTransaction'
+    };
+
+    try {
+        showLoadingSpinner();
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('تمت إضافة المعاملة بنجاح', 'success');
+            e.target.reset();
+            await loadTransactions(currentProduct);
+        } else {
+            throw new Error(result.data?.error || 'فشل في إضافة المعاملة');
+        }
+    } catch (error) {
+        console.error("خطأ:", error);
+        showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
 });
 
 // تحديث دالة تحميل المعاملات
 async function loadTransactions(productName) {
-  if (!productName) return;
+    if (!productName) return;
 
-  try {
-    showLoadingSpinner();
-    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
-    const result = await response.json();
-    
-    if (result.success) {
-      transactions = result.data.slice(1); // تجاهل صف العناوين
-      totalInputAmount = 0;
-      totalOutputAmount = 0;
-
-      transactions.forEach(transaction => {
-        if (transaction[1] === 'إدخال للعمل') {
-          totalInputAmount += parseFloat(transaction[2]) || 0;
-        } else {
-          totalOutputAmount += parseFloat(transaction[2]) || 0;
+    try {
+        showLoadingSpinner();
+        const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-      });
 
-      updateUI();
-    } else {
-      throw new Error(result.data.error || 'فشل في تحميل البيانات');
+        const result = await response.json();
+        if (result.success) {
+            transactions = result.data.slice(1); // تجاهل صف العناوين
+            totalInputAmount = 0;
+            totalOutputAmount = 0;
+
+            transactions.forEach(transaction => {
+                if (transaction[1] === 'إدخال للعمل') {
+                    totalInputAmount += parseFloat(transaction[2]) || 0;
+                } else {
+                    totalOutputAmount += parseFloat(transaction[2]) || 0;
+                }
+            });
+
+            updateUI();
+        } else {
+            throw new Error(result.data?.error || 'فشل في تحميل البيانات');
+        }
+    } catch (error) {
+        console.error("خطأ في تحميل المعاملات:", error);
+        showNotification('حدث خطأ في تحميل المعاملات', 'error');
+    } finally {
+        hideLoadingSpinner();
     }
-  } catch (error) {
-    console.error("خطأ في تحميل المعاملات:", error);
-    showNotification('حدث خطأ في تحميل المعاملات', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
+}
+
+// دالة إظهار الإشعارات
+function showNotification(message, type = 'success') {
+    Swal.fire({
+        text: message,
+        icon: type,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+}
+
+// دوال Loading Spinner
+function showLoadingSpinner() {
+    document.getElementById('loadingSpinner').style.display = 'flex';
+}
+
+function hideLoadingSpinner() {
+    document.getElementById('loadingSpinner').style.display = 'none';
 }
     
 </script>
