@@ -806,7 +806,7 @@ let totalInputAmount = 0;
 let totalOutputAmount = 0;
     let currentProduct = null;
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyw998XGk8ptd5xHbEgqVt4IsdyTKZbb_0IdhM2rOfP328V3u0zs8sdQSEsP7imB6b7/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytQwyQgD4KUICsvQdMBuoQKEf3j23Dir3ir3wjihEi6MWQh7ivAAiZrJ-FvPjyz1Lj/exec';
 
 
     // دالة تحميل المنتجات في القائمة المنسدلة
@@ -1143,53 +1143,80 @@ function addTransactionRow(transaction, index) {
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
-async function handleTransactionSubmit(formId, type) {
+async function submitTransaction(transactionData) {
   if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    showNotification('الرجاء اختيار منتج قبل إضافة المعاملة', 'error');
     return;
   }
 
-  const form = document.getElementById(formId);
-  const amount = parseFloat(form.querySelector('[type="number"]').value);
-  const notes = form.querySelector('[type="text"]').value;
-
-  const transaction = {
-    datetime: new Date().toLocaleString('ar-DZ'),
-    type: type,
-    amount: amount,
-    notes: notes,
-    product: currentProduct // إضافة اسم المنتج للمعاملة
-  };
+  // إضافة اسم المنتج إلى بيانات المعاملة
+  transactionData.productName = currentProduct;
 
   try {
     showLoadingSpinner();
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ...transaction,
-        product: currentProduct
+        action: 'addTransaction',
+        ...transactionData
       })
     });
 
     const result = await response.json();
-    
+
     if (result.success) {
-      await loadTransactions(); // إعادة تحميل البيانات من الصفحة المحددة
-      form.reset();
       showNotification('تمت إضافة المعاملة بنجاح', 'success');
+      loadTransactions(currentProduct);
     } else {
-      throw new Error(result.data.error || 'فشل في حفظ المعاملة');
+      throw new Error(result.data.error);
     }
   } catch (error) {
-    console.error("خطأ في حفظ المعاملة:", error);
-    showNotification(error.message || 'حدث خطأ في حفظ المعاملة', 'error');
+    console.error("خطأ في إضافة المعاملة:", error);
+    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
   } finally {
     hideLoadingSpinner();
   }
 }
+
+
+    // نموذج إدخال أموال للعمل
+document.getElementById('inputForm').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  const amount = parseFloat(document.getElementById('inputAmount').value);
+  const notes = document.getElementById('inputNotes').value.trim();
+
+  const transactionData = {
+    datetime: new Date().toISOString(),
+    type: 'إدخال للعمل',
+    amount: amount,
+    notes: notes
+  };
+
+  await submitTransaction(transactionData);
+});
+
+// نموذج تسجيل الأموال القادمة
+document.getElementById('outputForm').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  const amount = parseFloat(document.getElementById('outputAmount').value);
+  const notes = document.getElementById('outputNotes').value.trim();
+
+  const transactionData = {
+    datetime: new Date().toISOString(),
+    type: 'عائد من العمل',
+    amount: amount,
+    notes: notes
+  };
+
+  await submitTransaction(transactionData);
+});
+
+
+
+    
 
 // تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
 async function loadTransactions() {
