@@ -805,6 +805,24 @@ body {
 let currentProduct = null;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxN3t3m-4il9Fe0XW9ueMLTdOMgvKK01CERVV5XxhSFzjNTpwrgUXAGbEVgqAXV7_5T/exec';
 
+
+    
+function checkPassword(event) {
+  event.preventDefault();
+  const password = document.getElementById('passwordInput').value;
+  if (password === '2022') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    loadProducts(); // تحميل المنتجات مباشرة بعد تسجيل الدخول
+    return false;
+  } else {
+    document.getElementById('errorMessage').style.display = 'block';
+    document.getElementById('passwordInput').value = '';
+  }
+  return false;
+}
+
+    
 // تحميل المنتجات في القائمة المنسدلة
 async function loadProducts() {
     try {
