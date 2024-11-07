@@ -800,582 +800,99 @@ body {
 </html>
     
 <script>
+    
 // المتغيرات العامة
 let currentProduct = null;
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxN3t3m-4il9Fe0XW9ueMLTdOMgvKK01CERVV5XxhSFzjNTpwrgUXAGbEVgqAXV7_5T/exec';
 
-// دالة تحميل المنتجات في القائمة المنسدلة
+// تحميل المنتجات في القائمة المنسدلة
 async function loadProducts() {
-  try {
-    const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
-    const result = await response.json();
-    const select = document.getElementById('productSelect');
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
+        const result = await response.json();
+        const select = document.getElementById('productSelect');
+        
+        select.innerHTML = `
+            <option value="">اختر منتج...</option>
+            <option value="new">✨ إضافة منتج جديد</option>
+        `;
 
-    select.innerHTML = `
-      <option value="">اختر منتج...</option>
-      <option value="new">✨ إضافة منتج جديد</option>
-    `;
-
-    if (result.data.products) {
-      result.data.products.forEach(product => {
-        const option = document.createElement('option');
-        option.value = product.name;
-        option.textContent = product.name;
-        select.appendChild(option);
-      });
+        if (result.data.products) {
+            result.data.products.forEach(product => {
+                const option = document.createElement('option');
+                option.value = product.name;
+                option.textContent = product.name;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        showNotification('حدث خطأ في تحميل المنتجات', 'error');
     }
-  } catch (error) {
-    console.error("خطأ في تحميل المنتجات:", error);
-    showNotification('حدث خطأ في تحميل المنتجات', 'error');
-  }
 }
 
 // معالجة تغيير المنتج المحدد
 document.getElementById('productSelect').addEventListener('change', async function(e) {
-  const selectedValue = e.target.value;
-  
-  if (selectedValue === 'new') {
-    document.getElementById('newProductForm').style.display = 'block';
-    return;
-  }
-  
-  if (selectedValue) {
-    try {
-      showLoadingSpinner();
-      // طلب تحديد الصفحة المختارة
-      const response = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'selectSheet',
-          productName: selectedValue
-        })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        currentProduct = selectedValue;
-        document.getElementById('newProductForm').style.display = 'none';
-        await loadTransactions(selectedValue);
-        showNotification(`تم تحديد منتج: ${selectedValue}`, 'success');
-      } else {
-        throw new Error(result.error || 'فشل في تحديد المنتج');
-      }
-    } catch (error) {
-      console.error("خطأ:", error);
-      showNotification(error.message, 'error');
-    } finally {
-      hideLoadingSpinner();
+    const selectedValue = e.target.value;
+    
+    if (selectedValue === 'new') {
+        document.getElementById('newProductForm').style.display = 'block';
+        return;
     }
-  }
-});
-
-// دالة إضافة معاملة جديدة
-async function submitTransaction(formData) {
-  if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
-    return;
-  }
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'addTransaction',
-        productName: currentProduct,
-        ...formData
-      })
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      showNotification('تمت إضافة المعاملة بنجاح', 'success');
-      await loadTransactions(currentProduct);
-      return true;
-    } else {
-      throw new Error(result.error || 'فشل في إضافة المعاملة');
-    }
-  } catch (error) {
-    console.error("خطأ:", error);
-    showNotification(error.message, 'error');
-    return false;
-  } finally {
-    hideLoadingSpinner();
-  }
-}
-
-// دالة تحميل المعاملات للمنتج المحدد
-async function loadTransactions(productName) {
-  if (!productName) return;
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
-    const result = await response.json();
-
-    if (result.success) {
-      handleTransactionsData(result.data);
-      updateUI();
-    } else {
-      throw new Error(result.error || 'فشل في تحميل البيانات');
-    }
-  } catch (error) {
-    console.error("خطأ في تحميل المعاملات:", error);
-    showNotification('حدث خطأ في تحميل المعاملات', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
-}
-
-// معالجة نماذج الإدخال
-document.getElementById('inputForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const formData = {
-    type: 'إدخال للعمل',
-    amount: parseFloat(document.getElementById('inputAmount').value),
-    notes: document.getElementById('inputNotes').value,
-    datetime: new Date().toLocaleString('ar-DZ')
-  };
-
-  if (await submitTransaction(formData)) {
-    e.target.reset();
-  }
-});
-
-document.getElementById('outputForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const formData = {
-    type: 'عائد من العمل',
-    amount: parseFloat(document.getElementById('outputAmount').value),
-    notes: document.getElementById('outputNotes').value,
-    datetime: new Date().toLocaleString('ar-DZ')
-  };
-
-  if (await submitTransaction(formData)) {
-    e.target.reset();
-  }
-});
     
-// دالة إنشاء منتج جديد
-async function createNewProduct() {
-  const productName = document.getElementById('newProductName').value.trim();
-  
-  if (!productName) {
-    showNotification('الرجاء إدخال اسم المنتج', 'error');
-    return;
-  }
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'createProduct',
-        productName: productName
-      })
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      showNotification('تم إنشاء المنتج بنجاح', 'success');
-      document.getElementById('newProductForm').style.display = 'none';
-      document.getElementById('newProductName').value = '';
-      
-      // إعادة تحميل قائمة المنتجات وتحديد المنتج الجديد
-      await loadProducts();
-      document.getElementById('productSelect').value = productName;
-      currentProduct = productName;
-      loadTransactions(productName);
-    } else {
-      throw new Error(result.data.error);
-    }
-  } catch (error) {
-    console.error("خطأ في إنشاء المنتج:", error);
-    showNotification(error.message || 'حدث خطأ في إنشاء المنتج', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
-}
-
-function cancelNewProduct() {
-  document.getElementById('newProductForm').style.display = 'none';
-  document.getElementById('newProductName').value = '';
-  document.getElementById('productSelect').value = currentProduct || '';
-}
-
-    
-// دالة تحميل البيانات من Google Sheets
-
-
-// تحسين دالة updateUI
-function updateUI() {
-    const tbody = document.getElementById('transactionsBody');
-    tbody.innerHTML = ''; // مسح المحتوى القديم
-
-    // ترتيب المعاملات من الأحدث إلى الأقدم
-    transactions.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-
-    transactions.forEach((transaction, index) => {
-        const row = document.createElement('tr');
-        const profitMargin = calculateProfitMargin();
-        
-        row.classList.add('animate__animated', 'animate__fadeIn');
-        row.classList.add(transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output');
-        
-        row.innerHTML = `
-            <td>${transaction.datetime}</td>
-            <td>
-                <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
-                    ${transaction.type}
-                </span>
-            </td>
-            <td>${formatCurrency(transaction.amount)}</td>
-            <td>${transaction.notes || '-'}</td>
-            <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
-                <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-                ${profitMargin.toFixed(2)}%
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="deleteTransaction(${index})" title="حذف">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-
-    // تحديث الإحصائيات
-    document.getElementById('totalInput').textContent = formatCurrency(totalInputAmount);
-    document.getElementById('totalOutput').textContent = formatCurrency(totalOutputAmount);
-    document.getElementById('profitMargin').textContent = `${calculateProfitMargin().toFixed(2)}%`;
-}
-
-// إضافة دالة لتنسيق العملة
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('ar-DZ', {
-        style: 'currency',
-        currency: 'DZD',
-        minimumFractionDigits: 2
-    }).format(amount);
-}
-
-// تحسين دالة التهيئة
-async function initializeApp() {
-    try {
-        showLoadingSpinner();
-        await loadTransactions();
-        updateSystemDate();
-        setInterval(updateSystemDate, 60000);
-        showNotification('تم تحميل البيانات بنجاح', 'success');
-    } catch (error) {
-        console.error("خطأ في تهيئة التطبيق:", error);
-        showNotification('حدث خطأ في تهيئة التطبيق', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
- 
-    
-// تبسيط دالة checkPassword
-function checkPassword(event) {
-  event.preventDefault();
-  const password = document.getElementById('passwordInput').value;
-  if (password === '2022') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    loadProducts(); // تحميل المنتجات مباشرة بعد تسجيل الدخول
-    return false;
-  } else {
-    document.getElementById('errorMessage').style.display = 'block';
-    document.getElementById('passwordInput').value = '';
-  }
-  return false;
-}
-
-
-// إضافة دالة تسجيل الخروج
-function logout() {
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('errorMessage').style.display = 'none';
-    transactions = [];
-    totalInputAmount = 0;
-    totalOutputAmount = 0;
-}
-
-// إضافة مستمع حدث لزر تسجيل الخروج
-document.getElementById('logoutBtn').addEventListener('click', logout);
-    
-    async function checkServerConnection() {
-    try {
-        const response = await fetch(SCRIPT_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return true;
-    } catch (error) {
-        console.error("خطأ في الاتصال بالخادم:", error);
-        showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
-        return false;
-    }
-}
-
-    
-    function updateCharts() {
-    // تحديث الإحصائيات البصرية
-    const totalInputElement = document.getElementById('totalInput');
-    const totalOutputElement = document.getElementById('totalOutput');
-    const profitMarginElement = document.getElementById('profitMargin');
-
-    totalInputElement.innerHTML = `
-        <i class="fas fa-money-bill-wave"></i>
-        ${formatCurrency(totalInputAmount)}
-    `;
-    
-    totalOutputElement.innerHTML = `
-        <i class="fas fa-hand-holding-usd"></i>
-        ${formatCurrency(totalOutputAmount)}
-    `;
-
-    const profitMargin = calculateProfitMargin();
-    const profitIcon = profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-    const profitClass = profitMargin >= 0 ? 'profit' : 'loss';
-    
-    profitMarginElement.innerHTML = `
-        <i class="fas ${profitIcon}"></i>
-        ${profitMargin.toFixed(2)}%
-    `;
-    profitMarginElement.className = profitClass;
-}
-
-// دالة إضافة صف جديد مع تأثيرات حركية
-function addTransactionRow(transaction, index) {
-    const tbody = document.getElementById('transactionsBody');
-    const row = document.createElement('tr');
-    
-    // إضافة التأثيرات الحركية
-    row.classList.add('animate__animated', 'animate__fadeIn');
-    
-    // إضافة class للتمييز بين أنواع المعاملات
-    const transactionClass = transaction.type === 'إدخال للعمل' ? 'transaction-input' : 'transaction-output';
-    row.classList.add(transactionClass);
-    
-    // استخدام نفس طريقة حساب هامش الربح من الكود الأصلي
-    const profitMargin = totalInputAmount > 0 ? ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-    
-    // الاحتفاظ بنفس هيكل البيانات مع إضافة التحسينات الجمالية
-    row.innerHTML = `
-        <td>${transaction.datetime}</td>
-        <td>
-            <span class="transaction-type-badge ${transaction.type === 'إدخال للعمل' ? 'input-badge' : 'output-badge'}">
-                ${transaction.type}
-            </span>
-        </td>
-        <td>${transaction.amount.toFixed(2)} دج</td>
-        <td>${transaction.notes || '-'}</td>
-        <td class="${profitMargin >= 0 ? 'profit' : 'loss'}">
-            <i class="fas ${profitMargin >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-            ${profitMargin.toFixed(2)}%
-        </td>
-        <td>
-            <div class="action-buttons">
-                <button class="action-btn edit-btn" onclick="openEditModal(${index})" title="تعديل">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn delete-btn" onclick="deleteTransaction(${index})" title="حذف">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </td>
-    `;
-    
-    tbody.insertBefore(row, tbody.firstChild);
-}
-    
-
-
-
-    // دالة للتأكد من اتصال الخادم
-async function checkServerConnection() {
-  try {
-    const response = await fetch(SCRIPT_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return true;
-  } catch (error) {
-    console.error("خطأ في الاتصال بالخادم:", error);
-    showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
-    return false;
-  }
-}
-
-// إضافة فحص الاتصال عند بدء التطبيق
-window.addEventListener('load', async () => {
-  const isConnected = await checkServerConnection();
-  if (isConnected) {
-    // التطبيق جاهز للعمل
-  } else {
-    // عرض رسالة خطأ للمستخدم
-    showNotification('لا يمكن الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
-  }
-});
-    
-// دالة معالجة البيانات المستلمة
-   // دالة معالجة البيانات المستلمة
-function handleTransactionsData(data) {
-  transactions = [];
-  totalInputAmount = 0;
-  totalOutputAmount = 0;
-
-  // تجاهل الصف الأول (العناوين) وتحويل البيانات
-  data.slice(1).forEach(row => {
-    if (row.length >= 6) {
-      const transaction = {
-        datetime: row[0],
-        type: row[1],
-        amount: parseFloat(row[2]) || 0,
-        notes: row[3] || '',
-        profitMargin: row[4] || '0%',
-        id: row[5]
-      };
-      
-      transactions.push(transaction);
-
-      // تحديث المجاميع
-      if (transaction.type === 'إدخال للعمل') {
-        totalInputAmount += transaction.amount;
-      } else {
-        totalOutputAmount += transaction.amount;
-      }
-    }
-  });
-
-  updateUI();
-}
-
-// دالة اختيار المنتج
-function selectProduct(productName) {
-  currentProduct = productName;
-  document.getElementById('productSelectionOverlay').style.display = 'none';
-  document.getElementById('mainContent').style.display = 'block';
-  
-  // تحديث عنوان الصفحة ليظهر اسم المنتج المحدد
-  document.querySelector('.main-header h1').innerHTML = `
-    <i class="fas fa-box"></i>
-    <span>${productName} - نظام إدارة أموال العمل</span>
-  `;
-  
-  // تحميل بيانات المنتج المحدد
-  loadTransactions();
-}
-    
-// دالة حذف معاملة مع تأكيد
-async function deleteTransaction(index) {
-    try {
-        const result = await Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "لا يمكن التراجع عن هذا الإجراء!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'نعم، احذف!',
-            cancelButtonText: 'إلغاء'
-        });
-
-        if (result.isConfirmed) {
-            showLoadingSpinner();
-            const transaction = transactions[index];
-            
-            if (transaction.type === 'إدخال للعمل') {
-                totalInputAmount -= transaction.amount;
-            } else {
-                totalOutputAmount -= transaction.amount;
-            }
-
-            const response = await fetch(`${SCRIPT_URL}?action=delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ index })
+    if (selectedValue) {
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'selectSheet',
+                    productName: selectedValue
+                })
             });
 
-            if (response.ok) {
-                transactions.splice(index, 1);
-                await updateUI();
-                showNotification('تم حذف المعاملة بنجاح', 'success');
+            const result = await response.json();
+            if (result.success) {
+                currentProduct = selectedValue;
+                await loadTransactions(selectedValue);
+                showNotification(`تم تحديد منتج: ${selectedValue}`, 'success');
             }
+        } catch (error) {
+            showNotification('حدث خطأ في تحديد المنتج', 'error');
         }
-    } catch (error) {
-        console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
     }
-}
-
-  
-function updateSystemDate() {
-    const systemDate = document.getElementById('systemDate');
-    systemDate.textContent = formatDate(new Date());
-}
-    
-
-// دوال مساعدة
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ar-DZ', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    }).format(date);
-}
-
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('ar-DZ', {
-        style: 'currency',
-        currency: 'DZD',
-        minimumFractionDigits: 2
-    }).format(amount);
-}
-
-function calculateProfitMargin() {
-    return totalInputAmount > 0 ? 
-        ((totalOutputAmount - totalInputAmount) / totalInputAmount * 100) : 0;
-}
-
-
-
-// تعديل Event Listeners
-window.addEventListener('load', () => {
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
 });
 
+// إنشاء منتج جديد
+async function createNewProduct() {
+    const productName = document.getElementById('newProductName').value.trim();
+    if (!productName) {
+        showNotification('الرجاء إدخال اسم المنتج', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'createProduct',
+                productName: productName
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showNotification('تم إنشاء المنتج بنجاح', 'success');
+            document.getElementById('newProductForm').style.display = 'none';
+            await loadProducts();
+            document.getElementById('productSelect').value = productName;
+            currentProduct = productName;
+            await loadTransactions(productName);
+        }
+    } catch (error) {
+        showNotification('حدث خطأ في إنشاء المنتج', 'error');
+    }
+}
 
 // معالجة نموذج الإدخال
 document.getElementById('inputForm').addEventListener('submit', async (e) => {
@@ -1394,34 +911,7 @@ document.getElementById('inputForm').addEventListener('submit', async (e) => {
         action: 'addTransaction'
     };
 
-    try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.success) {
-            showNotification('تمت إضافة المعاملة بنجاح', 'success');
-            e.target.reset();
-            await loadTransactions(currentProduct);
-        } else {
-            throw new Error(result.data?.error || 'فشل في إضافة المعاملة');
-        }
-    } catch (error) {
-        console.error("خطأ:", error);
-        showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
+    await submitTransaction(formData, e.target);
 });
 
 // معالجة نموذج الإخراج
@@ -1441,75 +931,51 @@ document.getElementById('outputForm').addEventListener('submit', async (e) => {
         action: 'addTransaction'
     };
 
+    await submitTransaction(formData, e.target);
+});
+
+// إرسال المعاملة
+async function submitTransaction(formData, form) {
     try {
-        showLoadingSpinner();
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
 
         const result = await response.json();
         if (result.success) {
             showNotification('تمت إضافة المعاملة بنجاح', 'success');
-            e.target.reset();
+            form.reset();
             await loadTransactions(currentProduct);
-        } else {
-            throw new Error(result.data?.error || 'فشل في إضافة المعاملة');
         }
     } catch (error) {
-        console.error("خطأ:", error);
-        showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
+        showNotification('حدث خطأ في إضافة المعاملة', 'error');
     }
-});
+}
 
-// تحديث دالة تحميل المعاملات
+// تحميل المعاملات
 async function loadTransactions(productName) {
     if (!productName) return;
 
     try {
-        showLoadingSpinner();
         const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
         const result = await response.json();
         if (result.success) {
-            transactions = result.data.slice(1); // تجاهل صف العناوين
-            totalInputAmount = 0;
-            totalOutputAmount = 0;
-
-            transactions.forEach(transaction => {
-                if (transaction[1] === 'إدخال للعمل') {
-                    totalInputAmount += parseFloat(transaction[2]) || 0;
-                } else {
-                    totalOutputAmount += parseFloat(transaction[2]) || 0;
-                }
-            });
-
-            updateUI();
-        } else {
-            throw new Error(result.data?.error || 'فشل في تحميل البيانات');
+            updateUI(result.data);
         }
     } catch (error) {
-        console.error("خطأ في تحميل المعاملات:", error);
         showNotification('حدث خطأ في تحميل المعاملات', 'error');
-    } finally {
-        hideLoadingSpinner();
     }
 }
 
-// دالة إظهار الإشعارات
+// تحديث واجهة المستخدم
+function updateUI(data) {
+    // تحديث الجدول والإحصائيات هنا
+    // يمكنك إضافة التفاصيل حسب احتياجاتك
+}
+
+// إظهار الإشعارات
 function showNotification(message, type = 'success') {
     Swal.fire({
         text: message,
@@ -1517,19 +983,10 @@ function showNotification(message, type = 'success') {
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
+        timer: 3000
     });
 }
-
-// دوال Loading Spinner
-function showLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
-}
-
-function hideLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'none';
-}
+    
     
 </script>
     
