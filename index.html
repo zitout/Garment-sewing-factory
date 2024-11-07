@@ -48,8 +48,8 @@
     <!-- تحسين Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-
     
+   
     <style>
       /* الإعدادات الأساسية */
 * {
@@ -167,6 +167,45 @@ body {
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
+
+        /* إضافة هذه الأنماط */
+.product-selector {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.product-header {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.product-dropdown {
+  flex: 1;
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.product-dropdown:focus {
+  border-color: #2196f3;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.new-product-form {
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+        
 
 /* المحتوى الرئيسي */
 .container {
@@ -562,6 +601,35 @@ body {
         <span class="btn-text">تسجيل الخروج</span>
     </button>
 
+    <!-- إضافة هذا القسم بعد تسجيل الدخول مباشرة -->
+<div class="product-selector">
+  <div class="product-header">
+    <select id="productSelect" class="product-dropdown">
+      <option value="">اختر منتج...</option>
+      <option value="new">✨ إضافة منتج جديد</option>
+    </select>
+    <button id="addNewProduct" class="btn btn-primary">
+      <i class="fas fa-plus"></i> منتج جديد
+    </button>
+  </div>
+  
+  <!-- نموذج إضافة منتج جديد -->
+  <div id="newProductForm" class="new-product-form" style="display: none;">
+    <div class="form-group">
+      <label for="newProductName">اسم المنتج:</label>
+      <input type="text" id="newProductName" placeholder="أدخل اسم المنتج الجديد" required>
+    </div>
+    <div class="form-actions">
+      <button onclick="createNewProduct()" class="btn btn-success">
+        <i class="fas fa-check"></i> إنشاء
+      </button>
+      <button onclick="cancelNewProduct()" class="btn btn-secondary">
+        <i class="fas fa-times"></i> إلغاء
+      </button>
+    </div>
+  </div>
+</div>
+    
     <!-- المحتوى الرئيسي -->
     <div id="mainContent" class="container">
         <header class="main-header">
@@ -736,9 +804,103 @@ body {
 let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyVwqbw1JvpbJ0HBICepapT-9z4tAluchUuRoY3zvf2FMBvRmr-PNZ5wLzZWjC6YsnS/exec';
+    let currentProduct = null;
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLlc9_LJyxopiP6sFdo_egpLh9A-YlK3X2nE-c7PJOr1MZHbP4QO-2I_D5VsX9fGJd/exec';
 
 
+    // دالة تحميل المنتجات في القائمة المنسدلة
+async function loadProducts() {
+  try {
+    const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
+    const result = await response.json();
+    
+    const select = document.getElementById('productSelect');
+    // الاحتفاظ بالخيارين الأساسيين
+    select.innerHTML = `
+      <option value="">اختر منتج...</option>
+      <option value="new">✨ إضافة منتج جديد</option>
+    `;
+    
+    if (result.data.products) {
+      result.data.products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.name;
+        option.textContent = product.name;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("خطأ في تحميل المنتجات:", error);
+    showNotification('حدث خطأ في تحميل المنتجات', 'error');
+  }
+}
+
+// معالجة تغيير المنتج المحدد
+document.getElementById('productSelect').addEventListener('change', function(e) {
+  const selectedValue = e.target.value;
+  
+  if (selectedValue === 'new') {
+    document.getElementById('newProductForm').style.display = 'block';
+    return;
+  }
+  
+  if (selectedValue) {
+    currentProduct = selectedValue;
+    loadTransactions(selectedValue);
+    document.getElementById('newProductForm').style.display = 'none';
+  }
+});
+
+// دالة إنشاء منتج جديد
+async function createNewProduct() {
+  const productName = document.getElementById('newProductName').value.trim();
+  
+  if (!productName) {
+    showNotification('الرجاء إدخال اسم المنتج', 'error');
+    return;
+  }
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'createProduct',
+        productName: productName
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      showNotification('تم إنشاء المنتج بنجاح', 'success');
+      document.getElementById('newProductForm').style.display = 'none';
+      document.getElementById('newProductName').value = '';
+      
+      // إعادة تحميل قائمة المنتجات وتحديد المنتج الجديد
+      await loadProducts();
+      document.getElementById('productSelect').value = productName;
+      currentProduct = productName;
+      loadTransactions(productName);
+    } else {
+      throw new Error(result.data.error);
+    }
+  } catch (error) {
+    console.error("خطأ في إنشاء المنتج:", error);
+    showNotification(error.message || 'حدث خطأ في إنشاء المنتج', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+function cancelNewProduct() {
+  document.getElementById('newProductForm').style.display = 'none';
+  document.getElementById('newProductName').value = '';
+  document.getElementById('productSelect').value = currentProduct || '';
+}
+
+    
 // دالة تحميل البيانات من Google Sheets
 async function loadTransactions() {
     try {
@@ -862,23 +1024,21 @@ async function initializeApp() {
     
 // تبسيط دالة checkPassword
 function checkPassword(event) {
-    event.preventDefault();
-    const password = document.getElementById('passwordInput').value;
-    
-    if (password === '2022') {
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
-        document.getElementById('logoutBtn').style.display = 'block';
-        document.getElementById('passwordInput').value = '';
-        document.getElementById('errorMessage').style.display = 'none';
-        loadTransactions();
-        return false;
-    } else {
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('passwordInput').value = '';
-    }
+  event.preventDefault();
+  const password = document.getElementById('passwordInput').value;
+  if (password === '2022') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    loadProducts(); // تحميل المنتجات مباشرة بعد تسجيل الدخول
     return false;
+  } else {
+    document.getElementById('errorMessage').style.display = 'block';
+    document.getElementById('passwordInput').value = '';
+  }
+  return false;
 }
+
+
 // إضافة دالة تسجيل الخروج
 function logout() {
     document.getElementById('loginOverlay').style.display = 'flex';
@@ -981,50 +1141,154 @@ function addTransactionRow(transaction, index) {
 }
     
 // دالة معالجة إضافة معاملة جديدة
+// دالة معالجة إضافة معاملة جديدة
+// دالة معالجة إضافة معاملة جديدة
 async function handleTransactionSubmit(formId, type) {
-    const form = document.getElementById(formId);
-    const amount = parseFloat(form.querySelector('[type="number"]').value);
-    const notes = form.querySelector('[type="text"]').value;
+  if (!currentProduct) {
+    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    return;
+  }
 
-    const transaction = {
-        datetime: new Date().toLocaleString('ar-DZ', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        }),
-        type: type,
-        amount: amount,
-        notes: notes
-    };
+  const form = document.getElementById(formId);
+  const amount = parseFloat(form.querySelector('[type="number"]').value);
+  const notes = form.querySelector('[type="text"]').value;
 
-    try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(transaction)
-        });
+  const transaction = {
+    datetime: new Date().toLocaleString('ar-DZ'),
+    type: type,
+    amount: amount,
+    notes: notes,
+    product: currentProduct // إضافة اسم المنتج للمعاملة
+  };
 
-        if (response.ok) {
-            if (type === 'إدخال للعمل') {
-                totalInputAmount += amount;
-            } else {
-                totalOutputAmount += amount;
-            }
-            transactions.push(transaction);
-            updateUI();
-            form.reset();
-            showNotification('تمت إضافة المعاملة بنجاح', 'success');
-        }
-    } catch (error) {
-        console.error("خطأ في حفظ المعاملة:", error);
-        showNotification('حدث خطأ في حفظ المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...transaction,
+        product: currentProduct
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      await loadTransactions(); // إعادة تحميل البيانات من الصفحة المحددة
+      form.reset();
+      showNotification('تمت إضافة المعاملة بنجاح', 'success');
+    } else {
+      throw new Error(result.data.error || 'فشل في حفظ المعاملة');
     }
+  } catch (error) {
+    console.error("خطأ في حفظ المعاملة:", error);
+    showNotification(error.message || 'حدث خطأ في حفظ المعاملة', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+// تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
+async function loadTransactions() {
+  if (!currentProduct) return;
+  
+  try {
+    showLoadingSpinner();
+    const response = await fetch(`${SCRIPT_URL}?product=${currentProduct}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      handleTransactionsData(result.data);
+    } else {
+      throw new Error(result.data.error || 'فشل في تحميل البيانات');
+    }
+  } catch (error) {
+    console.error("خطأ في تحميل البيانات:", error);
+    showNotification('حدث خطأ في تحميل البيانات', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+
+
+ 
+    
+// دالة للتأكد من اتصال الخادم
+async function checkServerConnection() {
+  try {
+    const response = await fetch(SCRIPT_URL);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return true;
+  } catch (error) {
+    console.error("خطأ في الاتصال بالخادم:", error);
+    showNotification('فشل الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
+    return false;
+  }
+}
+
+// إضافة فحص الاتصال عند بدء التطبيق
+window.addEventListener('load', async () => {
+  const isConnected = await checkServerConnection();
+  if (isConnected) {
+    // التطبيق جاهز للعمل
+  } else {
+    // عرض رسالة خطأ للمستخدم
+    showNotification('لا يمكن الاتصال بالخادم، يرجى التحقق من اتصال الإنترنت', 'error');
+  }
+});
+    
+// دالة معالجة البيانات المستلمة
+   // دالة معالجة البيانات المستلمة
+function handleTransactionsData(data) {
+  transactions = [];
+  totalInputAmount = 0;
+  totalOutputAmount = 0;
+
+  // تجاهل الصف الأول (العناوين) وتحويل البيانات
+  data.slice(1).forEach(row => {
+    if (row.length >= 6) {
+      const transaction = {
+        datetime: row[0],
+        type: row[1],
+        amount: parseFloat(row[2]) || 0,
+        notes: row[3] || '',
+        profitMargin: row[4] || '0%',
+        id: row[5]
+      };
+      
+      transactions.push(transaction);
+
+      // تحديث المجاميع
+      if (transaction.type === 'إدخال للعمل') {
+        totalInputAmount += transaction.amount;
+      } else {
+        totalOutputAmount += transaction.amount;
+      }
+    }
+  });
+
+  updateUI();
+}
+
+// دالة اختيار المنتج
+function selectProduct(productName) {
+  currentProduct = productName;
+  document.getElementById('productSelectionOverlay').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  
+  // تحديث عنوان الصفحة ليظهر اسم المنتج المحدد
+  document.querySelector('.main-header h1').innerHTML = `
+    <i class="fas fa-box"></i>
+    <span>${productName} - نظام إدارة أموال العمل</span>
+  `;
+  
+  // تحميل بيانات المنتج المحدد
+  loadTransactions();
 }
     
 // دالة حذف معاملة مع تأكيد
