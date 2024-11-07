@@ -859,23 +859,38 @@ document.getElementById('productSelect').addEventListener('change', async functi
     
     if (selectedValue) {
         try {
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'selectSheet',
-                    productName: selectedValue
-                })
-            });
-
+            showLoadingSpinner();
+            // طلب تحديد الصفحة وتحميل بياناتها
+            const response = await fetch(`${SCRIPT_URL}?action=selectSheet&productName=${encodeURIComponent(selectedValue)}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
             if (result.success) {
                 currentProduct = selectedValue;
+                document.getElementById('newProductForm').style.display = 'none';
+                
+                // تحميل بيانات المنتج
                 await loadTransactions(selectedValue);
+                
+                // تحديث عنوان الصفحة
+                document.querySelector('.main-header h1').innerHTML = `
+                    <i class="fas fa-box"></i>
+                    <span>${selectedValue} - نظام إدارة أموال العمل</span>
+                `;
+                
                 showNotification(`تم تحديد منتج: ${selectedValue}`, 'success');
+            } else {
+                throw new Error(result.data?.error || 'فشل في تحديد المنتج');
             }
         } catch (error) {
+            console.error("خطأ:", error);
             showNotification('حدث خطأ في تحديد المنتج', 'error');
+            currentProduct = null;
+        } finally {
+            hideLoadingSpinner();
         }
     }
 });
@@ -972,20 +987,62 @@ async function submitTransaction(formData, form) {
     }
 }
 
-// تحميل المعاملات
+// تحديث دالة تحميل المعاملات
 async function loadTransactions(productName) {
     if (!productName) return;
 
     try {
+        showLoadingSpinner();
         const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const result = await response.json();
         if (result.success) {
-            updateUI(result.data);
+            handleTransactionsData(result.data);
+            updateUI();
+        } else {
+            throw new Error(result.data?.error || 'فشل في تحميل البيانات');
         }
     } catch (error) {
+        console.error("خطأ في تحميل المعاملات:", error);
         showNotification('حدث خطأ في تحميل المعاملات', 'error');
+    } finally {
+        hideLoadingSpinner();
     }
 }
+
+    // دالة معالجة البيانات المستلمة
+function handleTransactionsData(data) {
+    transactions = [];
+    totalInputAmount = 0;
+    totalOutputAmount = 0;
+
+    // تجاهل الصف الأول (العناوين) وتحويل البيانات
+    data.slice(1).forEach(row => {
+        if (row.length >= 6) {
+            const transaction = {
+                datetime: row[0],
+                type: row[1],
+                amount: parseFloat(row[2]) || 0,
+                notes: row[3] || '',
+                profitMargin: row[4],
+                id: row[5]
+            };
+            transactions.push(transaction);
+
+            if (transaction.type === 'إدخال للعمل') {
+                totalInputAmount += transaction.amount;
+            } else {
+                totalOutputAmount += transaction.amount;
+            }
+        }
+    });
+}
+
+
 
 // تحديث واجهة المستخدم
 function updateUI(data) {
