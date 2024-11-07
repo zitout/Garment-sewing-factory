@@ -902,50 +902,41 @@ function cancelNewProduct() {
 
     
 // دالة تحميل البيانات من Google Sheets
-async function loadTransactions() {
-    try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL);
-        const result = await response.json();
-        
-        // التأكد من أن البيانات موجودة وتحتوي على مصفوفة data
-        if (result && result.data) {
-            transactions = [];
-            totalInputAmount = 0;
-            totalOutputAmount = 0;
+// تحديث دالة تحميل المعاملات
+async function loadTransactions(productName) {
+  if (!productName) return;
 
-            // تجاهل الصف الأول (العناوين) وتحويل البيانات
-            result.data.slice(1).forEach(row => {
-                if (row.length >= 4) { // التأكد من وجود جميع البيانات المطلوبة
-                    const transaction = {
-                        datetime: row[0],
-                        type: row[1],
-                        amount: parseFloat(row[2]) || 0,
-                        notes: row[3] || '',
-                        profitMargin: row[4] || '0%'
-                    };
+  try {
+    showLoadingSpinner();
+    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      transactions = result.data.slice(1); // تجاهل صف العناوين
+      totalInputAmount = 0;
+      totalOutputAmount = 0;
 
-                    transactions.push(transaction);
-
-                    // تحديث المجاميع
-                    if (transaction.type === 'إدخال للعمل') {
-                        totalInputAmount += transaction.amount;
-                    } else {
-                        totalOutputAmount += transaction.amount;
-                    }
-                }
-            });
-
-            updateUI();
-            console.log("تم تحميل البيانات بنجاح:", transactions);
+      transactions.forEach(transaction => {
+        if (transaction[1] === 'إدخال للعمل') {
+          totalInputAmount += parseFloat(transaction[2]) || 0;
+        } else {
+          totalOutputAmount += parseFloat(transaction[2]) || 0;
         }
-    } catch (error) {
-        console.error("خطأ في تحميل البيانات:", error);
-        showNotification('حدث خطأ في تحميل البيانات', 'error');
-    } finally {
-        hideLoadingSpinner();
+      });
+
+      updateUI();
+    } else {
+      throw new Error(result.data.error || 'فشل في تحميل البيانات');
     }
+  } catch (error) {
+    console.error("خطأ في تحميل المعاملات:", error);
+    showNotification('حدث خطأ في تحميل المعاملات', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
 }
+
+
 
 // تحسين دالة updateUI
 function updateUI() {
@@ -1140,10 +1131,7 @@ function addTransactionRow(transaction, index) {
     tbody.insertBefore(row, tbody.firstChild);
 }
     
-// دالة معالجة إضافة معاملة جديدة
-// دالة معالجة إضافة معاملة جديدة
-// دالة معالجة إضافة معاملة جديدة
-// مثال على إرسال معاملة جديدة
+
 async function submitTransaction(transactionData) {
   try {
     const response = await fetch(SCRIPT_URL, {
@@ -1378,6 +1366,126 @@ document.getElementById('outputForm').addEventListener('submit', (e) => {
 });
 
 
+    // تحديث معالجة نموذج الإدخال
+document.getElementById('inputForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentProduct) {
+    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    return;
+  }
+
+  const formData = {
+    datetime: new Date().toLocaleString('ar-DZ'),
+    type: 'إدخال للعمل',
+    amount: parseFloat(document.getElementById('inputAmount').value),
+    notes: document.getElementById('inputNotes').value,
+    productName: currentProduct,
+    action: 'addTransaction'
+  };
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      showNotification('تمت إضافة المعاملة بنجاح', 'success');
+      e.target.reset();
+      loadTransactions(currentProduct);
+    } else {
+      throw new Error(result.data.error || 'فشل في إضافة المعاملة');
+    }
+  } catch (error) {
+    console.error("خطأ:", error);
+    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+});
+
+// تحديث معالجة نموذج الإخراج
+document.getElementById('outputForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentProduct) {
+    showNotification('الرجاء اختيار منتج أولاً', 'error');
+    return;
+  }
+
+  const formData = {
+    datetime: new Date().toLocaleString('ar-DZ'),
+    type: 'عائد من العمل',
+    amount: parseFloat(document.getElementById('outputAmount').value),
+    notes: document.getElementById('outputNotes').value,
+    productName: currentProduct,
+    action: 'addTransaction'
+  };
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      showNotification('تمت إضافة المعاملة بنجاح', 'success');
+      e.target.reset();
+      loadTransactions(currentProduct);
+    } else {
+      throw new Error(result.data.error || 'فشل في إضافة المعاملة');
+    }
+  } catch (error) {
+    console.error("خطأ:", error);
+    showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+});
+
+// تحديث دالة تحميل المعاملات
+async function loadTransactions(productName) {
+  if (!productName) return;
+
+  try {
+    showLoadingSpinner();
+    const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      transactions = result.data.slice(1); // تجاهل صف العناوين
+      totalInputAmount = 0;
+      totalOutputAmount = 0;
+
+      transactions.forEach(transaction => {
+        if (transaction[1] === 'إدخال للعمل') {
+          totalInputAmount += parseFloat(transaction[2]) || 0;
+        } else {
+          totalOutputAmount += parseFloat(transaction[2]) || 0;
+        }
+      });
+
+      updateUI();
+    } else {
+      throw new Error(result.data.error || 'فشل في تحميل البيانات');
+    }
+  } catch (error) {
+    console.error("خطأ في تحميل المعاملات:", error);
+    showNotification('حدث خطأ في تحميل المعاملات', 'error');
+  } finally {
+    hideLoadingSpinner();
+  }
+}
+    
 </script>
     
 </body>
