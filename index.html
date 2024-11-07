@@ -1143,108 +1143,47 @@ function addTransactionRow(transaction, index) {
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
 // دالة معالجة إضافة معاملة جديدة
-// دالة إرسال المعاملة
-async function submitTransaction(formId, type) {
-  if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
-    return;
-  }
-
-  const form = document.getElementById(formId);
-  const amount = parseFloat(form.querySelector('[type="number"]').value);
-  const notes = form.querySelector('[type="text"]').value;
-
-  const transactionData = {
-    datetime: new Date().toLocaleString('ar-DZ'),
-    type: type,
-    amount: amount,
-    notes: notes,
-    productName: currentProduct,
-    action: 'addTransaction'
-  };
-
+// مثال على إرسال معاملة جديدة
+async function submitTransaction(transactionData) {
   try {
-    showLoadingSpinner();
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(transactionData)
+      body: JSON.stringify({
+        ...transactionData,
+        productName: currentProduct, // إضافة اسم المنتج
+        action: 'addTransaction'
+      })
     });
-
     const result = await response.json();
     if (result.success) {
-      form.reset();
       showNotification('تمت إضافة المعاملة بنجاح', 'success');
-      await loadTransactions(currentProduct);
+      loadTransactions(currentProduct);
     } else {
-      throw new Error(result.error || 'فشل في حفظ المعاملة');
+      throw new Error(result.error);
     }
   } catch (error) {
-    console.error("خطأ في إضافة المعاملة:", error);
+    console.error("خطأ:", error);
     showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
-  } finally {
-    hideLoadingSpinner();
   }
 }
 
-// دالة تحميل المعاملات
+// تحميل معاملات منتج معين
 async function loadTransactions(productName) {
-  if (!productName) return;
-  
   try {
-    showLoadingSpinner();
     const response = await fetch(`${SCRIPT_URL}?productName=${encodeURIComponent(productName)}`);
     const result = await response.json();
-    
     if (result.success) {
-      // تحديث المتغيرات العامة
-      transactions = [];
-      totalInputAmount = 0;
-      totalOutputAmount = 0;
-
-      // معالجة البيانات الواردة
-      if (Array.isArray(result.data) && result.data.length > 1) {
-        // تجاهل الصف الأول (العناوين)
-        result.data.slice(1).forEach(row => {
-          const transaction = {
-            datetime: row[0],
-            type: row[1],
-            amount: parseFloat(row[2]) || 0,
-            notes: row[3] || '',
-            profitMargin: row[4] || '0%',
-            id: row[5]
-          };
-
-          transactions.push(transaction);
-
-          // تحديث المجاميع
-          if (transaction.type === 'إدخال للعمل') {
-            totalInputAmount += transaction.amount;
-          } else {
-            totalOutputAmount += transaction.amount;
-          }
-        });
-      }
-
-      // تحديث واجهة المستخدم
-      updateUI();
-    } else {
-      throw new Error(result.error || 'فشل في تحميل البيانات');
+      // تحديث واجهة المستخدم بالمعاملات
+      updateTransactions(result.data);
     }
   } catch (error) {
     console.error("خطأ في تحميل المعاملات:", error);
     showNotification('حدث خطأ في تحميل المعاملات', 'error');
-  } finally {
-    hideLoadingSpinner();
   }
 }
-
-
- 
     
-// دالة للتأكد من اتصال الخادم
+
+    // دالة للتأكد من اتصال الخادم
 async function checkServerConnection() {
   try {
     const response = await fetch(SCRIPT_URL);
