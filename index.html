@@ -450,6 +450,31 @@ body {
     border: 2px solid #388e3c;
 }
 
+        .amount-input-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#amountInput {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+#amountInput:focus {
+    border-color: #2196f3;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+        
+
 /* التأثيرات الحركية */
 @keyframes fadeIn {
     from { 
@@ -605,19 +630,19 @@ body {
 <div class="product-selector">
   <div class="product-header">
     <select id="productSelect" class="product-dropdown">
-      <option value="">اختر منتج...</option>
-      <option value="new">✨ إضافة منتج جديد</option>
+      <option value="">اختر الشخص...</option>
+      <option value="new">✨ إضافة شخص جديد</option>
     </select>
     <button id="addNewProduct" class="btn btn-primary">
-      <i class="fas fa-plus"></i> منتج جديد
+      <i class="fas fa-plus"></i> شخص جديد
     </button>
   </div>
   
-  <!-- نموذج إضافة منتج جديد -->
+  <!-- نموذج إضافة شخص جديد -->
   <div id="newProductForm" class="new-product-form" style="display: none;">
     <div class="form-group">
-      <label for="newProductName">اسم المنتج:</label>
-      <input type="text" id="newProductName" placeholder="أدخل اسم المنتج الجديد" required>
+      <label for="newProductName">اسم الشخص:</label>
+      <input type="text" id="newProductName" placeholder="أدخل اسم الشخص الجديد" required>
     </div>
     <div class="form-actions">
       <button onclick="createNewProduct()" class="btn btn-success">
@@ -630,613 +655,235 @@ body {
   </div>
 </div>
     
-    <!-- المحتوى الرئيسي -->
-    <div id="mainContent" class="container">
-        <header class="main-header">
-            <h1>
-                <i class="fas fa-money-check-alt"></i>
-                <span>نظام إدارة أموال العمل</span>
-            </h1>
-            <p class="system-date" id="systemDate"></p>
-        </header>
-
-        <div class="forms-container">
-            <!-- قسم إدخال أموال العمل -->
-            <section class="form-section input-section animate__animated animate__fadeInLeft">
-                <h2>
-                    <i class="fas fa-arrow-circle-down"></i>
-                    <span>إدخال أموال للعمل</span>
-                </h2>
-                <form id="inputForm" class="transaction-form">
-                    <div class="form-group">
-                        <label for="inputAmount">
-                            <i class="fas fa-coins"></i>
-                            المبلغ المدخل:
-                        </label>
-                        <input type="number" 
-                               id="inputAmount" 
-                               min="0" 
-                               step="0.01"
-                               inputmode="decimal"
-                               required>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputNotes">
-                            <i class="fas fa-comment-alt"></i>
-                            ملاحظات:
-                        </label>
-                        <input type="text" 
-                               id="inputNotes" 
-                               maxlength="100">
-                    </div>
-                    <button type="submit" class="btn btn-input">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>إضافة مبلغ</span>
-                    </button>
-                </form>
-            </section>
-
-            <!-- قسم الأموال القادمة -->
-            <section class="form-section output-section animate__animated animate__fadeInRight">
-                <h2>
-                    <i class="fas fa-arrow-circle-up"></i>
-                    <span>الأموال القادمة</span>
-                </h2>
-                <form id="outputForm" class="transaction-form">
-                    <div class="form-group">
-                        <label for="outputAmount">
-                            <i class="fas fa-coins"></i>
-                            المبلغ المستلم:
-                        </label>
-                        <input type="number" 
-                               id="outputAmount" 
-                               min="0" 
-                               step="0.01"
-                               inputmode="decimal"
-                               required>
-                    </div>
-                    <div class="form-group">
-                        <label for="outputNotes">
-                            <i class="fas fa-comment-alt"></i>
-                            ملاحظات:
-                        </label>
-                        <input type="text" 
-                               id="outputNotes" 
-                               maxlength="100">
-                    </div>
-                    <button type="submit" class="btn btn-output">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>تسجيل مبلغ</span>
-                    </button>
-                </form>
-            </section>
-        </div>
-
-        <!-- الإحصائيات -->
-        <div class="statistics animate__animated animate__fadeInUp">
-            <div class="stat-card" role="status">
-                <i class="fas fa-money-bill-wave"></i>
-                <h3>إجمالي المدخلات</h3>
-                <p id="totalInput">0 دج</p>
-            </div>
-            <div class="stat-card" role="status">
-                <i class="fas fa-hand-holding-usd"></i>
-                <h3>إجمالي العائدات</h3>
-                <p id="totalOutput">0 دج</p>
-            </div>
-            <div class="stat-card" role="status">
-                <i class="fas fa-chart-line"></i>
-                <h3>هامش الربح</h3>
-                <p id="profitMargin">0%</p>
-            </div>
-        </div>
-
-        <!-- جدول العمليات -->
-        <section class="transactions-section animate__animated animate__fadeIn">
-            <h2>
-                <i class="fas fa-history"></i>
-                <span>سجل العمليات</span>
-            </h2>
-            <div class="table-container">
-                <table class="transactions-table" role="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">التاريخ</th>
-                            <th scope="col">النوع</th>
-                            <th scope="col">المبلغ</th>
-                            <th scope="col">ملاحظات</th>
-                            <th scope="col">الهامش</th>
-                            <th scope="col">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsBody"></tbody>
-                </table>
-            </div>
-        </section>
+  <!-- أضف هذا بعد product-selector -->
+<div class="amount-input-container">
+    <div class="form-group">
+        <label for="amountInput">المبلغ:</label>
+        <input type="number" id="amountInput" placeholder="أدخل المبلغ (موجب أو سالب)" step="any">
+        <button onclick="updatePersonBalance()" class="btn btn-input">
+            <i class="fas fa-save"></i> حفظ
+        </button>
     </div>
+</div>
 
-    <!-- نافذة التعديل -->
-    <div id="editModal" class="modal">
-        <div class="modal-content animate__animated animate__zoomIn">
-            <h2>تعديل المعاملة</h2>
-            <form id="editForm">
-                <input type="hidden" id="editIndex">
-                <div class="form-group">
-                    <label for="editAmount">المبلغ:</label>
-                    <input type="number" 
-                           id="editAmount" 
-                           min="0" 
-                           step="0.01"
-                           required>
-                </div>
-                <div class="form-group">
-                    <label for="editNotes">ملاحظات:</label>
-                    <input type="text" 
-                           id="editNotes" 
-                           maxlength="100">
-                </div>
-                <div class="modal-buttons">
-                    <button type="submit" class="btn btn-save">
-                        <i class="fas fa-save"></i>
-                        <span>حفظ</span>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-cancel" 
-                            onclick="closeEditModal()">
-                        <i class="fas fa-times"></i>
-                        <span>إلغاء</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    // إضافة هذا الكود في نهاية ملف HTML قبل إغلاق الـ body
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="loading-spinner" role="alert" aria-busy="true">
-        <div class="spinner"></div>
-        <p>جاري التحميل...</p>
-    </div>
-</body>
-</html>
-    
 <script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7cxS457YE_vpBa6-pQrjEZfseT1vu5PRzvhas8_b2uqmkflb6sUDGeQ4cXvu3uONt/exec'; // رابط نشر سكريبت Google
+let currentPersons = [];
 
-    // المتغيرات العامة للتطبيق
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzbl0xw1CBH1khaJeKxKmZjy4Fzdp7vuKgtumqYzXaJx1NlR1w7UPZAkm_XjKKdTA4/exec';
-let currentProduct = null;
-let transactions = [];
-let totalInputAmount = 0;
-let totalOutputAmount = 0;
-
-
-// تبسيط دالة checkPassword
-function checkPassword(event) {
-  event.preventDefault();
-  const password = document.getElementById('passwordInput').value;
-  if (password === '2022') {
-    document.getElementById('loginOverlay').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    loadProducts(); // تحميل المنتجات مباشرة بعد تسجيل الدخول
-    return false;
-  } else {
-    document.getElementById('errorMessage').style.display = 'block';
-    document.getElementById('passwordInput').value = '';
-  }
-  return false;
+// دالة تهيئة التطبيق
+async function initApp() {
+    await loadPersons();
+    setupEventListeners();
 }
 
-// إضافة مستمع الحدث لنموذج تسجيل الدخول
-document.getElementById('loginForm').addEventListener('submit', checkPassword);
+    async function checkPassword(event) {
+    event.preventDefault();
+    
+    const password = document.getElementById('passwordInput').value;
+    const errorMessage = document.getElementById('errorMessage');
+    const loginOverlay = document.getElementById('loginOverlay');
+    
+    // يمكنك تغيير كلمة المرور هنا أو استخدام API للتحقق
+    const correctPassword = '2022';
+    
+    try {
+        showLoading();
+        
+        // محاكاة تأخير الشبكة
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        if (password === correctPassword) {
+            // تخزين حالة تسجيل الدخول
+            localStorage.setItem('isLoggedIn', 'true');
+            
+            // إخفاء نافذة تسجيل الدخول بتأثير متحرك
+            loginOverlay.classList.add('animate__fadeOut');
+            setTimeout(() => {
+                loginOverlay.style.display = 'none';
+                document.querySelector('.container').style.display = 'block';
+            }, 500);
+            
+            // إظهار زر تسجيل الخروج
+            document.getElementById('logoutBtn').style.display = 'block';
+            
+            return false;
+        } else {
+            errorMessage.style.display = 'block';
+            errorMessage.classList.add('animate__animated', 'animate__shakeX');
+            
+            // إزالة الأنيميشن بعد انتهائه
+            setTimeout(() => {
+                errorMessage.classList.remove('animate__animated', 'animate__shakeX');
+            }, 1000);
+            
+            // مسح كلمة المرور
+            document.getElementById('passwordInput').value = '';
+        }
+    } catch (error) {
+        console.error('خطأ في تسجيل الدخول:', error);
+        errorMessage.textContent = 'حدث خطأ أثناء تسجيل الدخول';
+        errorMessage.style.display = 'block';
+    } finally {
+        hideLoading();
+    }
+    
+    return false;
+}
+
+// دالة مساعدة لإظهار مؤشر التحميل
+function showLoading() {
+    const spinner = document.querySelector('.loading-spinner');
+    if (spinner) {
+        spinner.style.display = 'flex';
+    }
+}
+
+// دالة مساعدة لإخفاء مؤشر التحميل
+function hideLoading() {
+    const spinner = document.querySelector('.loading-spinner');
+    if (spinner) {
+        spinner.style.display = 'none';
+    }
+}
 
 // التحقق من حالة تسجيل الدخول عند تحميل الصفحة
-window.addEventListener('load', function() {
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
-    if (isLoggedIn === 'true') {
-        document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
-        document.getElementById('logoutBtn').style.display = 'block';
-        loadProducts();
+document.addEventListener('DOMContentLoaded', () => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const loginOverlay = document.getElementById('loginOverlay');
+    const container = document.querySelector('.container');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (isLoggedIn) {
+        loginOverlay.style.display = 'none';
+        container.style.display = 'block';
+        logoutBtn.style.display = 'block';
+    } else {
+        loginOverlay.style.display = 'flex';
+        container.style.display = 'none';
+        logoutBtn.style.display = 'none';
     }
 });
 
 // دالة تسجيل الخروج
 function logout() {
-    // إعادة تهيئة الواجهة
-    document.getElementById('loginOverlay').style.display = 'flex';
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('errorMessage').style.display = 'none';
-    
-    // مسح البيانات
-    transactions = [];
-    totalInputAmount = 0;
-    totalOutputAmount = 0;
-    currentProduct = null;
-    
-    // مسح حالة تسجيل الدخول من الجلسة
-    sessionStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isLoggedIn');
+    location.reload();
 }
 
 // إضافة مستمع حدث لزر تسجيل الخروج
 document.getElementById('logoutBtn').addEventListener('click', logout);
     
-// === إدارة المنتجات ===
-async function loadProducts() {
+// تحميل الأشخاص من Google Sheets
+async function loadPersons() {
     try {
-        showLoadingSpinner();
-        const response = await fetch(`${SCRIPT_URL}?action=getProducts`);
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || 'فشل في تحميل المنتجات');
-        }
-
-        updateProductsDropdown(result.data.products);
+        const response = await fetch(`${SCRIPT_URL}?action=getAllPersons`);
+        const data = await response.json();
+        currentPersons = data;
+        updatePersonsDropdown();
     } catch (error) {
-        console.error("خطأ في تحميل المنتجات:", error);
-        showNotification('حدث خطأ في تحميل المنتجات', 'error');
-    } finally {
-        hideLoadingSpinner();
+        console.error('Error loading persons:', error);
+        showError('فشل في تحميل البيانات');
     }
 }
 
-function updateProductsDropdown(products) {
+// تحديث قائمة الأشخاص
+function updatePersonsDropdown() {
     const select = document.getElementById('productSelect');
-    select.innerHTML = `
-        <option value="">اختر منتج...</option>
-        <option value="new">✨ إضافة منتج جديد</option>
-    `;
+    select.innerHTML = '<option value="">اختر الشخص...</option>';
+    select.innerHTML += '<option value="new">✨ إضافة شخص جديد</option>';
     
-    products.forEach(product => {
-        const option = document.createElement('option');
-        option.value = product.name;
-        option.textContent = product.name;
-        select.appendChild(option);
+    currentPersons.forEach(person => {
+        select.innerHTML += `<option value="${person[0]}">${person[0]} (${person[1]})</option>`;
     });
 }
 
-async function createNewProduct() {
-    const productName = document.getElementById('newProductName').value.trim();
+// إضافة شخص جديد
+async function createNewPerson() {
+    const nameInput = document.getElementById('newProductName');
+    const name = nameInput.value.trim();
     
-    if (!productName) {
-        showNotification('الرجاء إدخال اسم المنتج', 'error');
+    if (!name) {
+        showError('الرجاء إدخال اسم الشخص');
         return;
     }
 
     try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'createProduct',
-                productName: productName
-            })
-        });
-
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || 'فشل في إنشاء المنتج');
+        const response = await fetch(`${SCRIPT_URL}?action=addNewPerson&name=${encodeURIComponent(name)}`);
+        if (response.ok) {
+            await loadPersons();
+            document.getElementById('newProductForm').style.display = 'none';
+            nameInput.value = '';
+            showSuccess('تم إضافة الشخص بنجاح');
         }
-
-        showNotification('تم إنشاء المنتج بنجاح', 'success');
-        document.getElementById('newProductForm').style.display = 'none';
-        document.getElementById('newProductName').value = '';
-        
-        await loadProducts();
-        currentProduct = productName;
-        document.getElementById('productSelect').value = productName;
-        await loadTransactions(productName);
-
     } catch (error) {
-        console.error("خطأ في إنشاء المنتج:", error);
-        showNotification(error.message, 'error');
-    } finally {
-        hideLoadingSpinner();
+        console.error('Error adding person:', error);
+        showError('فشل في إضافة الشخص');
     }
 }
 
-// === إدارة المعاملات ===
-async function loadTransactions(productName) {
-    if (!productName) return;
+// تحديث رصيد شخص
+async function updatePersonBalance() {
+    const select = document.getElementById('productSelect');
+    const amountInput = document.getElementById('amountInput');
+    const name = select.value;
+    const amount = amountInput.value;
 
-    try {
-        showLoadingSpinner();
-        const response = await fetch(`${SCRIPT_URL}?action=getTransactions&productName=${encodeURIComponent(productName)}`);
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'فشل في تحميل المعاملات');
-        }
-
-        transactions = result.data.slice(1); // تجاهل صف العناوين
-        calculateTotals();
-        updateUI();
-
-    } catch (error) {
-        console.error("خطأ في تحميل المعاملات:", error);
-        showNotification('حدث خطأ في تحميل المعاملات', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
-
-async function addTransaction(type, amount, notes) {
-    if (!currentProduct) {
-        showNotification('الرجاء اختيار منتج أولاً', 'error');
+    if (!name || !amount) {
+        showError('الرجاء اختيار شخص وإدخال المبلغ');
         return;
     }
 
     try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'addTransaction',
-                productName: currentProduct,
-                type: type,
-                amount: parseFloat(amount),
-                notes: notes
-            })
-        });
-
-        const result = await response.json();
-        
-        if (!result.success) {
-            throw new Error(result.error || 'فشل في إضافة المعاملة');
+        const response = await fetch(`${SCRIPT_URL}?action=updateBalance&name=${encodeURIComponent(name)}&amount=${amount}`);
+        if (response.ok) {
+            await loadPersons();
+            amountInput.value = '';
+            showSuccess('تم تحديث الرصيد بنجاح');
         }
-
-        showNotification('تم إضافة المعاملة بنجاح', 'success');
-        await loadTransactions(currentProduct);
-
     } catch (error) {
-        console.error("خطأ في إضافة المعاملة:", error);
-        showNotification(error.message, 'error');
-    } finally {
-        hideLoadingSpinner();
+        console.error('Error updating balance:', error);
+        showError('فشل في تحديث الرصيد');
     }
 }
 
-// === الحسابات والتحديثات ===
-function calculateTotals() {
-    totalInputAmount = 0;
-    totalOutputAmount = 0;
-
-    transactions.forEach(transaction => {
-        const amount = parseFloat(transaction[2]) || 0;
-        if (transaction[1] === 'إدخال للعمل') {
-            totalInputAmount += amount;
-        } else {
-            totalOutputAmount += amount;
-        }
-    });
-}
-
-function calculateProfitMargin() {
-    if (totalInputAmount === 0) return 0;
-    return ((totalOutputAmount - totalInputAmount) / totalInputAmount) * 100;
-}
-
-function updateUI() {
-    updateTransactionsTable();
-    updateStatistics();
-}
-
-function updateTransactionsTable() {
-    const tbody = document.getElementById('transactionsBody');
-    tbody.innerHTML = '';
-
-    transactions.forEach((transaction, index) => {
-        const row = createTransactionRow(transaction, index);
-        tbody.appendChild(row);
-    });
-}
-
-function updateStatistics() {
-    document.getElementById('totalInput').textContent = formatCurrency(totalInputAmount);
-    document.getElementById('totalOutput').textContent = formatCurrency(totalOutputAmount);
-    document.getElementById('profitMargin').textContent = `${calculateProfitMargin().toFixed(2)}%`;
-}
-
-// === المساعدة والتنسيق ===
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('ar-DZ', {
-        style: 'currency',
-        currency: 'DZD',
-        minimumFractionDigits: 2
-    }).format(amount);
-}
-
-function showNotification(message, type) {
-    Swal.fire({
-        text: message,
-        icon: type,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-}
-
-function showLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
-}
-
-function hideLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'none';
-}
-
-    function calculateProfitMargin() {
-    if (totalInputAmount === 0) return 0;
-    return ((totalOutputAmount - totalInputAmount) / totalInputAmount) * 100;
-}
-    function updateSystemDate() {
-    const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    document.getElementById('systemDate').textContent = now.toLocaleDateString('ar-SA', options);
-}
-
-    function showLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'flex';
-}
-
-function hideLoadingSpinner() {
-    document.getElementById('loadingSpinner').style.display = 'none';
-}
-    function showNotification(message, type) {
-    Swal.fire({
-        text: message,
-        icon: type,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        customClass: {
-            popup: 'animate__animated animate__fadeInDown'
-        }
-    });
-}
-    async function deleteTransaction(index) {
-    try {
-        const result = await Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: 'لا يمكن التراجع عن هذا الإجراء!',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'نعم، احذف',
-            cancelButtonText: 'إلغاء',
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            }
-        });
-
-        if (result.isConfirmed) {
-            showLoadingSpinner();
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'deleteTransaction',
-                    productName: currentProduct,
-                    index: index
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                await loadTransactions(currentProduct);
-                showNotification('تم حذف المعاملة بنجاح', 'success');
-            } else {
-                throw new Error(data.error);
-            }
-        }
-    } catch (error) {
-        console.error("خطأ في حذف المعاملة:", error);
-        showNotification('حدث خطأ في حذف المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
-    async function updateTransaction(index, newAmount, newNotes) {
-    try {
-        showLoadingSpinner();
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'updateTransaction',
-                productName: currentProduct,
-                index: index,
-                amount: parseFloat(newAmount),
-                notes: newNotes
-            })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            await loadTransactions(currentProduct);
-            showNotification('تم تحديث المعاملة بنجاح', 'success');
-        } else {
-            throw new Error(result.error);
-        }
-    } catch (error) {
-        console.error("خطأ في تحديث المعاملة:", error);
-        showNotification('حدث خطأ في تحديث المعاملة', 'error');
-    } finally {
-        hideLoadingSpinner();
-    }
-}
-    function openEditModal(index) {
-    const transaction = transactions[index];
-    document.getElementById('editIndex').value = index;
-    document.getElementById('editAmount').value = transaction.amount;
-    document.getElementById('editNotes').value = transaction.notes;
-    document.getElementById('editModal').style.display = 'block';
-}
-
-function closeEditModal() {
-    document.getElementById('editModal').style.display = 'none';
-}
-    document.getElementById('editForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const index = document.getElementById('editIndex').value;
-    const newAmount = document.getElementById('editAmount').value;
-    const newNotes = document.getElementById('editNotes').value;
-    await updateTransaction(index, newAmount, newNotes);
-    closeEditModal();
-});
-    
-
-// === مستمعي الأحداث ===
-document.addEventListener('DOMContentLoaded', () => {
-    // مستمع تغيير المنتج
+// إعداد مستمعي الأحداث
+function setupEventListeners() {
     document.getElementById('productSelect').addEventListener('change', function(e) {
-        const selectedValue = e.target.value;
-        if (selectedValue === 'new') {
+        if (e.target.value === 'new') {
             document.getElementById('newProductForm').style.display = 'block';
-        } else if (selectedValue) {
-            currentProduct = selectedValue;
-            loadTransactions(selectedValue);
+        } else {
             document.getElementById('newProductForm').style.display = 'none';
         }
     });
 
-    // مستمعي نماذج الإدخال
-    document.getElementById('inputForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const amount = document.getElementById('inputAmount').value;
-        const notes = document.getElementById('inputNotes').value;
-        await addTransaction('إدخال للعمل', amount, notes);
-        this.reset();
+    document.getElementById('addNewProduct').addEventListener('click', () => {
+        document.getElementById('newProductForm').style.display = 'block';
     });
+}
 
-    document.getElementById('outputForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const amount = document.getElementById('outputAmount').value;
-        const notes = document.getElementById('outputNotes').value;
-        await addTransaction('استلام أموال', amount, notes);
-        this.reset();
+// دوال المساعدة
+function showSuccess(message) {
+    Swal.fire({
+        icon: 'success',
+        title: 'نجاح',
+        text: message,
+        timer: 2000
     });
-});
-    
+}
+
+function showError(message) {
+    Swal.fire({
+        icon: 'error',
+        title: 'خطأ',
+        text: message
+    });
+}
+
+// تهيئة التطبيق عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+    </body>
+</html>
