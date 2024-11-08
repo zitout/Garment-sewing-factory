@@ -809,51 +809,20 @@ let totalInputAmount = 0;
 let totalOutputAmount = 0;
 
 
-    // دالة التحقق من كلمة السر
+// تبسيط دالة checkPassword
 function checkPassword(event) {
-    event.preventDefault(); // منع السلوك الافتراضي للنموذج
-    
-    const password = document.getElementById('passwordInput').value;
-    const loginOverlay = document.getElementById('loginOverlay');
-    const mainContent = document.getElementById('mainContent');
-    const errorMessage = document.getElementById('errorMessage');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    if (password === '2022') { // كلمة السر الصحيحة
-        // إخفاء نافذة تسجيل الدخول
-        loginOverlay.style.display = 'none';
-        
-        // إظهار المحتوى الرئيسي
-        mainContent.style.display = 'block';
-        
-        // إظهار زر تسجيل الخروج
-        logoutBtn.style.display = 'block';
-        
-        // تحميل المنتجات
-        loadProducts();
-        
-        // مسح كلمة السر من الحقل
-        document.getElementById('passwordInput').value = '';
-        
-        // إخفاء رسالة الخطأ إن كانت ظاهرة
-        errorMessage.style.display = 'none';
-
-        // حفظ حالة تسجيل الدخول في الجلسة
-        sessionStorage.setItem('isLoggedIn', 'true');
-
-        return false;
-    } else {
-        // إظهار رسالة الخطأ
-        errorMessage.style.display = 'block';
-        
-        // مسح كلمة السر غير الصحيحة
-        document.getElementById('passwordInput').value = '';
-        
-        // تركيز المؤشر على حقل كلمة السر
-        document.getElementById('passwordInput').focus();
-
-        return false;
-    }
+  event.preventDefault();
+  const password = document.getElementById('passwordInput').value;
+  if (password === '2022') {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    loadProducts(); // تحميل المنتجات مباشرة بعد تسجيل الدخول
+    return false;
+  } else {
+    document.getElementById('errorMessage').style.display = 'block';
+    document.getElementById('passwordInput').value = '';
+  }
+  return false;
 }
 
 // إضافة مستمع الحدث لنموذج تسجيل الدخول
