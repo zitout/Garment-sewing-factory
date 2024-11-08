@@ -808,6 +808,90 @@ let transactions = [];
 let totalInputAmount = 0;
 let totalOutputAmount = 0;
 
+
+    // دالة التحقق من كلمة السر
+function checkPassword(event) {
+    event.preventDefault(); // منع السلوك الافتراضي للنموذج
+    
+    const password = document.getElementById('passwordInput').value;
+    const loginOverlay = document.getElementById('loginOverlay');
+    const mainContent = document.getElementById('mainContent');
+    const errorMessage = document.getElementById('errorMessage');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (password === '2022') { // كلمة السر الصحيحة
+        // إخفاء نافذة تسجيل الدخول
+        loginOverlay.style.display = 'none';
+        
+        // إظهار المحتوى الرئيسي
+        mainContent.style.display = 'block';
+        
+        // إظهار زر تسجيل الخروج
+        logoutBtn.style.display = 'block';
+        
+        // تحميل المنتجات
+        loadProducts();
+        
+        // مسح كلمة السر من الحقل
+        document.getElementById('passwordInput').value = '';
+        
+        // إخفاء رسالة الخطأ إن كانت ظاهرة
+        errorMessage.style.display = 'none';
+
+        // حفظ حالة تسجيل الدخول في الجلسة
+        sessionStorage.setItem('isLoggedIn', 'true');
+
+        return false;
+    } else {
+        // إظهار رسالة الخطأ
+        errorMessage.style.display = 'block';
+        
+        // مسح كلمة السر غير الصحيحة
+        document.getElementById('passwordInput').value = '';
+        
+        // تركيز المؤشر على حقل كلمة السر
+        document.getElementById('passwordInput').focus();
+
+        return false;
+    }
+}
+
+// إضافة مستمع الحدث لنموذج تسجيل الدخول
+document.getElementById('loginForm').addEventListener('submit', checkPassword);
+
+// التحقق من حالة تسجيل الدخول عند تحميل الصفحة
+window.addEventListener('load', function() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true') {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        document.getElementById('logoutBtn').style.display = 'block';
+        loadProducts();
+    }
+});
+
+// دالة تسجيل الخروج
+function logout() {
+    // إعادة تهيئة الواجهة
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('errorMessage').style.display = 'none';
+    
+    // مسح البيانات
+    transactions = [];
+    totalInputAmount = 0;
+    totalOutputAmount = 0;
+    currentProduct = null;
+    
+    // مسح حالة تسجيل الدخول من الجلسة
+    sessionStorage.removeItem('isLoggedIn');
+}
+
+// إضافة مستمع حدث لزر تسجيل الخروج
+document.getElementById('logoutBtn').addEventListener('click', logout);
+    
 // === إدارة المنتجات ===
 async function loadProducts() {
     try {
@@ -1020,6 +1104,140 @@ function showLoadingSpinner() {
 function hideLoadingSpinner() {
     document.getElementById('loadingSpinner').style.display = 'none';
 }
+
+    function calculateProfitMargin() {
+    if (totalInputAmount === 0) return 0;
+    return ((totalOutputAmount - totalInputAmount) / totalInputAmount) * 100;
+}
+    function updateSystemDate() {
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    document.getElementById('systemDate').textContent = now.toLocaleDateString('ar-SA', options);
+}
+
+    function showLoadingSpinner() {
+    document.getElementById('loadingSpinner').style.display = 'flex';
+}
+
+function hideLoadingSpinner() {
+    document.getElementById('loadingSpinner').style.display = 'none';
+}
+    function showNotification(message, type) {
+    Swal.fire({
+        text: message,
+        icon: type,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+            popup: 'animate__animated animate__fadeInDown'
+        }
+    });
+}
+    async function deleteTransaction(index) {
+    try {
+        const result = await Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: 'لا يمكن التراجع عن هذا الإجراء!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء',
+            customClass: {
+                confirmButton: 'btn btn-danger',
+                cancelButton: 'btn btn-secondary'
+            }
+        });
+
+        if (result.isConfirmed) {
+            showLoadingSpinner();
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'deleteTransaction',
+                    productName: currentProduct,
+                    index: index
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                await loadTransactions(currentProduct);
+                showNotification('تم حذف المعاملة بنجاح', 'success');
+            } else {
+                throw new Error(data.error);
+            }
+        }
+    } catch (error) {
+        console.error("خطأ في حذف المعاملة:", error);
+        showNotification('حدث خطأ في حذف المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+    async function updateTransaction(index, newAmount, newNotes) {
+    try {
+        showLoadingSpinner();
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'updateTransaction',
+                productName: currentProduct,
+                index: index,
+                amount: parseFloat(newAmount),
+                notes: newNotes
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            await loadTransactions(currentProduct);
+            showNotification('تم تحديث المعاملة بنجاح', 'success');
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error("خطأ في تحديث المعاملة:", error);
+        showNotification('حدث خطأ في تحديث المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
+}
+    function openEditModal(index) {
+    const transaction = transactions[index];
+    document.getElementById('editIndex').value = index;
+    document.getElementById('editAmount').value = transaction.amount;
+    document.getElementById('editNotes').value = transaction.notes;
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const index = document.getElementById('editIndex').value;
+    const newAmount = document.getElementById('editAmount').value;
+    const newNotes = document.getElementById('editNotes').value;
+    await updateTransaction(index, newAmount, newNotes);
+    closeEditModal();
+});
+    
 
 // === مستمعي الأحداث ===
 document.addEventListener('DOMContentLoaded', () => {
