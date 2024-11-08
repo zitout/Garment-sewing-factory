@@ -806,7 +806,7 @@ let totalInputAmount = 0;
 let totalOutputAmount = 0;
     let currentProduct = null;
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzozxt-ingKUVRu8GY_tue4ul2ybpDWTyWcKgnmTjivOSWq2cHpqTi80zmRYQJjrKOV/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxga-xURquonFZoaR08rEFW0ZdxtRLJSSuHOfr87okYM2y9eWhDkBR_BzmBL8b86hgn/exec';
 
 
     // دالة تحميل المنتجات في القائمة المنسدلة
@@ -1140,57 +1140,62 @@ function addTransactionRow(transaction, index) {
     tbody.insertBefore(row, tbody.firstChild);
 }
     
-// دالة معالجة إضافة معاملة جديدة
-// دالة معالجة إضافة معاملة جديدة
-// دالة معالجة إضافة معاملة جديدة
-async function handleTransactionSubmit(formId, type) {
-  if (!currentProduct) {
-    showNotification('الرجاء اختيار منتج أولاً', 'error');
-    return;
-  }
-
-  const form = document.getElementById(formId);
-  const amount = parseFloat(form.querySelector('[type="number"]').value);
-  const notes = form.querySelector('[type="text"]').value;
-
-  const transaction = {
-    datetime: new Date().toLocaleString('ar-DZ'),
-    type: type,
-    amount: amount,
-    notes: notes,
-    product: currentProduct // إضافة اسم المنتج للمعاملة
-  };
-
-  try {
-    showLoadingSpinner();
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...transaction,
-        product: currentProduct
-      })
-    });
-
-    const result = await response.json();
-    
-    if (result.success) {
-      await loadTransactions(); // إعادة تحميل البيانات من الصفحة المحددة
-      form.reset();
-      showNotification('تمت إضافة المعاملة بنجاح', 'success');
-    } else {
-      throw new Error(result.data.error || 'فشل في حفظ المعاملة');
+// دالة إضافة معاملة جديدة
+async function addTransaction(type, amount, notes) {
+    if (!currentProduct) {
+        showNotification('الرجاء اختيار منتج أولاً', 'error');
+        return;
     }
-  } catch (error) {
-    console.error("خطأ في حفظ المعاملة:", error);
-    showNotification(error.message || 'حدث خطأ في حفظ المعاملة', 'error');
-  } finally {
-    hideLoadingSpinner();
-  }
+
+    try {
+        showLoadingSpinner();
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'addTransaction',
+                productName: currentProduct,
+                type: type,
+                amount: parseFloat(amount),
+                notes: notes
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('تم إضافة المعاملة بنجاح', 'success');
+            await loadTransactions(currentProduct);
+        } else {
+            throw new Error(result.error || 'حدث خطأ في إضافة المعاملة');
+        }
+    } catch (error) {
+        console.error("خطأ في إضافة المعاملة:", error);
+        showNotification(error.message || 'حدث خطأ في إضافة المعاملة', 'error');
+    } finally {
+        hideLoadingSpinner();
+    }
 }
 
+// إضافة مستمعي الأحداث لنماذج الإدخال
+document.getElementById('inputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = document.getElementById('inputAmount').value;
+    const notes = document.getElementById('inputNotes').value;
+    await addTransaction('إدخال للعمل', amount, notes);
+    this.reset();
+});
+
+document.getElementById('outputForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = document.getElementById('outputAmount').value;
+    const notes = document.getElementById('outputNotes').value;
+    await addTransaction('استلام أموال', amount, notes);
+    this.reset();
+});
+    
 // تحديث دالة loadTransactions لتحميل بيانات المنتج المحدد
 async function loadTransactions() {
   if (!currentProduct) return;
